@@ -72,6 +72,9 @@ dependencies {
     implementation(files("libs/litematica-fabric-26.1.2-0.27.14.jar"))
     implementation(files("libs/malilib-fabric-26.1.2-0.28.12.jar"))
 
+    // Hana TGP V4 Printer
+    implementation(files("libs/litematica-printer-hana-26.1-TGP-V4-local.jar"))
+
     // Quietee Utils
     implementation(files("libs/quiettee-utils-1.0.0+mc26.1.jar"))
 }
