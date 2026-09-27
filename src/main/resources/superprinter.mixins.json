@@ -1,10 +1,10 @@
 {
   "required": true,
-  "package": "net.numericly.superprinter.mixin",
+  "package": "com.vortex.printer.mixins",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "com.julflips.nerv_printer.mixins.BlockUtilsMixin",
-    "com.julflips.nerv_printer.mixins.ClientPlayerInteractionManagerMixin"
+    "BlockUtilsMixin",
+    "ClientPlayerInteractionManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
