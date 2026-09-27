@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "net.numericly.superprinter.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "com.julflips.nerv_printer.mixins.BlockUtilsMixin",
+    "com.julflips.nerv_printer.mixins.ClientPlayerInteractionManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

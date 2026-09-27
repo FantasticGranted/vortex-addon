@@ -1,0 +1,9 @@
+Starting a Gradle Daemon, 3 busy Daemons could not be reused, use --status for details
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :compileJava UP-TO-DATE
+
+BUILD SUCCESSFUL in 44s
+1 actionable task: 1 up-to-date
