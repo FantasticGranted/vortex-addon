@@ -150,6 +150,10 @@ tasks {
         from(sourceSets.main.get().output) {
             include("com/vortex/**")
         }
+        // Bundle quietee-utils classes inside the vortex jar
+        from(zipTree("libs/quiettee-utils-1.0.0+mc26.1.jar")) {
+            exclude("fabric.mod.json")
+        }
         from(layout.projectDirectory.dir("src/vortex/resources")) {
             exclude("fabric.mod.json")
         }

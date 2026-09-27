@@ -11,11 +11,13 @@
   "environment": "client",
   "entrypoints": {
     "meteor": [
-      "com.vortex.Vortex"
+      "com.vortex.Vortex",
+      "com.quiettee.utils.QuietteeUtils"
     ]
   },
   "mixins": [
-    "vortex_printer.mixins.json"
+    "vortex_printer.mixins.json",
+    "quiettee-utils.mixins.json"
   ],
   "custom": {
     "meteor-client:color": "0,255,220",
@@ -28,7 +30,6 @@
   "depends": {
     "java": ">=${jdk_version}",
     "minecraft": "${minecraft_version}",
-    "meteor-client": "*",
-    "quiettee-utils": "*"
+    "meteor-client": "*"
   }
 }
