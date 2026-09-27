@@ -40,7 +40,7 @@ loom {
 }
 
 base {
-    archivesName = "superprinter"
+    archivesName = "vortex"
     version = readModVersion()
     group = "net.numericly"
 }
@@ -194,26 +194,23 @@ tasks {
             }
 
             val current = project.version.toString()
-            val superprinterJar = File(deployModsDir, "superprinter-$current.jar")
-            val vortexJar = File(deployModsDir, "vortex-$current.jar")
+            val targetJar = File(deployModsDir, "vortex-$current.jar")
 
-            if (isFileLocked(superprinterJar) || isFileLocked(vortexJar)) {
-                throw GradleException("${superprinterJar.name} / ${vortexJar.name} is locked by a running game - close Minecraft before deploying")
+            if (isFileLocked(targetJar)) {
+                throw GradleException("${targetJar.name} is locked by a running game - close Minecraft before deploying")
             }
 
             deployModsDir.listFiles { f ->
                 f.isFile &&
                     f.extension == "jar" &&
                     (f.name.startsWith("superprinter-") || f.name.startsWith("vortex-")) &&
-                    f.name != superprinterJar.name &&
-                    f.name != vortexJar.name
+                    f.name != targetJar.name
             }?.forEach { it.delete() }
 
-            println("Deploying superprinter-$current.jar and vortex-$current.jar -> ${deployModsDir.absolutePath}")
+            println("Deploying vortex-$current.jar -> ${deployModsDir.absolutePath}")
         }
 
         from(layout.buildDirectory.dir("libs")) {
-            include("superprinter-${project.version}.jar")
             include("vortex-${project.version}.jar")
         }
         into(deployModsDir)
