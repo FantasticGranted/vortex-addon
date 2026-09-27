@@ -150,6 +150,9 @@ tasks {
         from(sourceSets.main.get().output) {
             include("com/vortex/**")
         }
+        from(layout.projectDirectory.dir("src/main/resources")) {
+            include("vortex_printer.mixins.json")
+        }
         // Bundle quietee-utils classes inside the vortex jar
         from(zipTree("libs/quiettee-utils-1.0.0+mc26.1.jar")) {
             exclude("fabric.mod.json")
