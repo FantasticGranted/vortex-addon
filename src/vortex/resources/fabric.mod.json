@@ -12,11 +12,14 @@
   "entrypoints": {
     "meteor": [
       "com.vortex.Vortex",
-      "com.quiettee.utils.QuietteeUtils"
+      "com.quiettee.utils.QuietteeUtils",
+      "net.numericly.superprinter.SuperPrinter"
     ]
   },
+  "accessWidener": "printer.accesswidener",
   "mixins": [
     "vortex_printer.mixins.json",
+    "superprinter.mixins.json",
     "quiettee-utils.mixins.json"
   ],
   "custom": {
