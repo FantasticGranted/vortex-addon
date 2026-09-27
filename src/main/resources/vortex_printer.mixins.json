@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.vortex.printer.mixins",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "BlockUtilsMixin",
+    "ClientPlayerInteractionManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
