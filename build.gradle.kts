@@ -148,7 +148,9 @@ tasks {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
         // Include ALL compiled classes (superprinter + vortex)
-        from(sourceSets.main.get().output)
+        from(sourceSets.main.get().output) {
+            exclude("fabric.mod.json")
+        }
         from(layout.projectDirectory.dir("src/main/resources")) {
             include("vortex_printer.mixins.json")
             include("superprinter.mixins.json")
