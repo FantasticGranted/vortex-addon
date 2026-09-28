@@ -77,6 +77,9 @@ dependencies {
 
     // Quietee Utils
     implementation(files("libs/quiettee-utils-1.0.0+mc26.1.jar"))
+
+    // QuinnAddon
+    implementation(files("libs/QuinnAddon-0.3.0-26.1.2.jar"))
 }
 
 sourceSets {
