@@ -3,17 +3,31 @@
   "id": "vortex",
   "version": "${version}",
   "name": "Vortex",
-  "description": "Vortex addon for Meteor Client 26.1.2 - combat, crystal aura, auto regear, elytra flight, and map printer.",
+  "description": "Vortex addon for Meteor Client 26.1.2 - combat, crystal aura, auto regear, elytra flight, map printer, and more.",
   "authors": [
-    "Vortex"
+    "Vortex",
+    "Volizray (VolytraFly)",
+    "Fragment-Zero (Quiettee Utils)",
+    "Quinn (QuinnAddon)",
+    "numericly (Super Printer)",
+    "Quiettee (Quiettee Utils)",
+    "Fractal420 (Hana TGP Printer)"
   ],
+  "contact": {
+    "sources": "https://github.com/FantasticGranted/vortex-addon"
+  },
   "icon": "assets/vortex/icon.png",
   "environment": "client",
   "entrypoints": {
     "meteor": [
       "com.vortex.Vortex",
       "com.quiettee.utils.QuietteeUtils",
-      "net.numericly.superprinter.SuperPrinter"
+      "net.numericly.superprinter.SuperPrinter",
+      "com.volytrafly.VolytraFlyAddon",
+      "com.example.addon.QuinnAddon"
+    ],
+    "main": [
+      "com.example.addon.SoundRegistry"
     ]
   },
   "accessWidener": "printer.accesswidener",
