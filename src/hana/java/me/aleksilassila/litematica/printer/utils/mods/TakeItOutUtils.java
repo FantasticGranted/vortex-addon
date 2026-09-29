@@ -1,0 +1,337 @@
+package me.aleksilassila.litematica.printer.utils.mods;
+
+import net.fabricmc.loader.api.FabricLoader;
+import me.aleksilassila.litematica.printer.Reference;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.HashSet;
+import java.util.Set;
+
+public final class TakeItOutUtils {
+    private static final String MOD_ID = "takeitout";
+    private static final String CLIENT_CLASS = "net.maxbel.takeitout.client.TakeitoutClient";
+    private static final String SOURCES_CLASS = "net.maxbel.takeitout.client.WorldContainerSources";
+    private static final String SHULKER_PAYLOAD_CLASS = "net.maxbel.takeitout.Takeitout$GetShulkerStackPayload";
+    private static final String CLIENT_PLAY_NETWORKING_CLASS = "net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking";
+    private static final Minecraft client = Minecraft.getInstance();
+    private static boolean apiFailureLogged;
+
+    private TakeItOutUtils() {
+    }
+
+    public static boolean isLoaded() {
+        return FabricLoader.getInstance().isModLoaded(MOD_ID);
+    }
+
+    public static boolean isAutoTakeoutEnabled() {
+        if (!isLoaded()) {
+            return false;
+        }
+        try {
+            Field field = Class.forName(CLIENT_CLASS).getField("AUTOTAKEOUT");
+            return field.getBoolean(null);
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            logApiFailure("read automatic retrieval configuration", exception);
+            return false;
+        }
+    }
+
+    public static Set<Item> getAvailableItems() {
+        if (!isLoaded() || !isAutoTakeoutEnabled()) {
+            return Set.of();
+        }
+        try {
+            Object value = Class.forName(CLIENT_CLASS)
+                    .getField("WORLD_CONTAINER_ITEMS")
+                    .get(null);
+            if (!(value instanceof Iterable<?> entries)) {
+                return Set.of();
+            }
+            Set<Item> items = new HashSet<>();
+            for (Object entry : entries) {
+                if (entry == null) {
+                    continue;
+                }
+                Method stackMethod = entry.getClass().getMethod("stack");
+                Method countMethod = entry.getClass().getMethod("count");
+                Object stackValue = stackMethod.invoke(entry);
+                Object countValue = countMethod.invoke(entry);
+                if (stackValue instanceof ItemStack stack
+                        && countValue instanceof Integer count
+                        && count > 0
+                        && !stack.isEmpty()) {
+                    items.add(stack.getItem());
+                }
+            }
+            return items.isEmpty() ? Set.of() : Set.copyOf(items);
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            logApiFailure("read remote container materials", exception);
+            return Set.of();
+        }
+    }
+
+    public static void requestAvailableItemsRefresh() {
+        if (!isLoaded() || !isAutoTakeoutEnabled()) {
+            return;
+        }
+        try {
+            Class.forName("net.maxbel.takeitout.client.WorldContainerMaterialListCache")
+                    .getMethod("requestRefresh", Minecraft.class)
+                    .invoke(null, client);
+        } catch (ClassNotFoundException | NoSuchMethodException ignored) {
+
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            logApiFailure("refresh remote container materials", exception);
+        }
+    }
+
+    public static boolean isAwaitingStack() {
+        ItemStack awaitingStack = getAwaitingStack();
+        if (awaitingStack != null && !awaitingStack.isEmpty()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isAwaitingItem(Item item) {
+        ItemStack awaitingStack = getAwaitingStack();
+        return item != null && !awaitingStack.isEmpty() && awaitingStack.is(item);
+    }
+
+    public static boolean tryRequestItem(Item item) {
+        if (item == null || !isAutoTakeoutEnabled()) {
+            return false;
+        }
+        if (isAwaitingStack()) {
+            return true;
+        }
+
+        ItemStack required = new ItemStack(item);
+        if (required.isEmpty()) {
+            return false;
+        }
+        return tryRequestFromInventoryShulker(required) || tryRequestFromWorldContainers(required);
+    }
+
+    public static void resetPending() {
+        if (!isLoaded()) {
+            return;
+        }
+        try {
+            setAwaitingStack(ItemStack.EMPTY);
+        } catch (ReflectiveOperationException ignored) {
+        }
+    }
+
+    private static boolean tryRequestFromWorldContainers(ItemStack required) {
+        try {
+            Class<?> sourcesClass = Class.forName(SOURCES_CLASS);
+            Method requestStack;
+            Object result;
+            try {
+                requestStack = sourcesClass.getMethod(
+                        "requestStack",
+                        Minecraft.class,
+                        ItemStack.class,
+                        boolean.class,
+                        boolean.class
+                );
+                result = requestStack.invoke(null, client, singleStack(required), isSingleItemMode(), false);
+            } catch (NoSuchMethodException ignored) {
+                requestStack = sourcesClass.getMethod(
+                        "requestStack",
+                        Minecraft.class,
+                        ItemStack.class,
+                        boolean.class
+                );
+                result = requestStack.invoke(null, client, singleStack(required), isSingleItemMode());
+            }
+            if (Boolean.TRUE.equals(result)) {
+                return true;
+            }
+            return false;
+        } catch (ClassNotFoundException | NoSuchMethodException ignored) {
+
+            return false;
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            logApiFailure("request world container", exception);
+            return false;
+        }
+    }
+
+    private static boolean tryRequestFromInventoryShulker(ItemStack required) {
+        if (client.player == null) {
+            return false;
+        }
+        Inventory inventory = client.player.getInventory();
+        int size = Math.min(36, inventory.getContainerSize());
+        for (int shulkerSlot = 0; shulkerSlot < size; shulkerSlot++) {
+            ItemStack shulker = inventory.getItem(shulkerSlot);
+            if (!isSingleShulker(shulker)) {
+                continue;
+            }
+            int innerSlot = findStoredItemSlot(shulker, required.getItem());
+            if (innerSlot == -1) {
+                continue;
+            }
+            return sendShulkerRequest(innerSlot, shulkerSlot, required);
+        }
+        return false;
+    }
+
+    private static boolean sendShulkerRequest(int innerSlot, int shulkerSlot, ItemStack required) {
+        try {
+            Class<?> payloadClass = Class.forName(SHULKER_PAYLOAD_CLASS);
+            Object payload = createShulkerPayload(payloadClass, innerSlot, shulkerSlot);
+            if (!canSend(payloadClass)) {
+                return false;
+            }
+            setAwaitingStack(singleStack(required));
+            sendPayload(payload);
+            return true;
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            logApiFailure("request inventory shulker box", exception);
+            clearAwaitingStackIfSameItem(required);
+            return false;
+        }
+    }
+
+    private static Object createShulkerPayload(
+            Class<?> payloadClass,
+            int innerSlot,
+            int shulkerSlot
+    ) throws ReflectiveOperationException {
+        try {
+            Constructor<?> constructor = payloadClass.getConstructor(
+                    int.class,
+                    int.class,
+                    boolean.class
+            );
+            return constructor.newInstance(innerSlot, shulkerSlot, isSingleItemMode());
+        } catch (NoSuchMethodException ignored) {
+            Constructor<?> constructor = payloadClass.getConstructor(int.class, int.class);
+            return constructor.newInstance(innerSlot, shulkerSlot);
+        }
+    }
+
+    private static boolean canSend(Class<?> payloadClass) {
+        try {
+            Field idField = payloadClass.getField("ID");
+            Object id = idField.get(null);
+            Class<?> networkingClass = Class.forName(CLIENT_PLAY_NETWORKING_CLASS);
+            for (Method method : networkingClass.getMethods()) {
+                if (!method.getName().equals("canSend") || method.getParameterCount() != 1) {
+                    continue;
+                }
+                if (!method.getParameterTypes()[0].isInstance(id)) {
+                    continue;
+                }
+                Object result = method.invoke(null, id);
+                return Boolean.TRUE.equals(result);
+            }
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            logApiFailure("check network channel", exception);
+            return false;
+        }
+        return false;
+    }
+
+    private static void sendPayload(Object payload) throws ReflectiveOperationException {
+        Class<?> networkingClass = Class.forName(CLIENT_PLAY_NETWORKING_CLASS);
+        for (Method method : networkingClass.getMethods()) {
+            if (!method.getName().equals("send")
+                    || method.getParameterCount() != 1
+                    || !Modifier.isStatic(method.getModifiers())) {
+                continue;
+            }
+            if (method.getParameterTypes()[0].isInstance(payload)) {
+                method.invoke(null, payload);
+                return;
+            }
+        }
+        throw new NoSuchMethodException("ClientPlayNetworking.send(payload)");
+    }
+
+    private static boolean isSingleItemMode() {
+        try {
+            Field field = Class.forName(CLIENT_CLASS).getField("TAKE_SINGLE_ITEM_MODE");
+            return field.getBoolean(null);
+        } catch (NoSuchFieldException ignored) {
+
+            return false;
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            logApiFailure("read single-item mode", exception);
+            return false;
+        }
+    }
+
+    private static ItemStack getAwaitingStack() {
+        if (!isLoaded()) {
+            return ItemStack.EMPTY;
+        }
+        try {
+            Object value = Class.forName(CLIENT_CLASS).getField("awaitingStack").get(null);
+            return value instanceof ItemStack stack ? stack : ItemStack.EMPTY;
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            logApiFailure("read pending item", exception);
+            return ItemStack.EMPTY;
+        }
+    }
+
+    private static void setAwaitingStack(ItemStack stack) throws ReflectiveOperationException {
+        Class.forName(CLIENT_CLASS).getField("awaitingStack").set(null, stack.copy());
+    }
+
+    private static void clearAwaitingStackIfSameItem(ItemStack stack) {
+        ItemStack awaitingStack = getAwaitingStack();
+        if (awaitingStack.isEmpty() || !awaitingStack.is(stack.getItem())) {
+            return;
+        }
+        try {
+            setAwaitingStack(ItemStack.EMPTY);
+        } catch (ReflectiveOperationException ignored) {
+        }
+    }
+
+    private static boolean isSingleShulker(ItemStack stack) {
+        return !stack.isEmpty()
+                && stack.getCount() == 1
+                && stack.getItem() instanceof BlockItem blockItem
+                && blockItem.getBlock() instanceof ShulkerBoxBlock;
+    }
+
+    private static int findStoredItemSlot(ItemStack shulker, Item item) {
+        NonNullList<ItemStack> storedItems = fi.dy.masa.malilib.util.InventoryUtils.getStoredItems(shulker, -1);
+        for (int slot = 0; slot < storedItems.size(); slot++) {
+            ItemStack stack = storedItems.get(slot);
+            if (!stack.isEmpty() && stack.is(item)) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
+    private static ItemStack singleStack(ItemStack stack) {
+        ItemStack copy = stack.copy();
+        copy.setCount(1);
+        return copy;
+    }
+
+    private static void logApiFailure(String operation, Throwable exception) {
+        if (apiFailureLogged) {
+            return;
+        }
+        apiFailureLogged = true;
+        Reference.LOGGER.warn("Take It Out API call failed; {} operation skipped", operation, exception);
+    }
+}

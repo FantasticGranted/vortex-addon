@@ -46,6 +46,7 @@ base {
 }
 
 repositories {
+    mavenCentral()
     maven {
         name = "meteor-maven"
         url = uri("https://maven.meteordev.org/releases")
@@ -72,21 +73,30 @@ dependencies {
     implementation(files("libs/litematica-fabric-26.1.2-0.27.14.jar"))
     implementation(files("libs/malilib-fabric-26.1.2-0.28.12.jar"))
 
-    // Hana TGP V4 Printer
-    implementation(files("libs/litematica-printer-hana-26.1-TGP-V4-local.jar"))
+    // Hana printer deps
+    implementation(files("libs/tweakeroo-fabric-26.1.2-0.28.10.jar"))
+    implementation(files("libs/quickshulker-v3.2.2-mc26.1.jar"))
+    implementation(files("libs/chesttracker-2.8.3%2B26.1.2.jar"))
+    implementation(files("libs/modmenu.jar"))
+    implementation(fileTree("libs/fapi") { include("*.jar") })
+
+    // Lombok (Hana printer uses @Getter)
+    compileOnly("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.42")
+
+    // Pinyin search (Hana printer)
+    implementation("com.belerweb:pinyin4j:2.5.1")
 
     // Quietee Utils
     implementation(files("libs/quiettee-utils-1.0.0+mc26.1.jar"))
-
-    // QuinnAddon
-    implementation(files("libs/QuinnAddon-0.3.0-26.1.2.jar"))
 }
 
 sourceSets {
     main {
         // The vortex addon sources are kept in a separate tree and get
         // packaged into their own jar by the vortexJar task.
-        java.srcDirs("src/main/java", "src/vortex/java")
+        java.srcDirs("src/main/java", "src/vortex/java", "src/hana/java")
+        resources.srcDirs("src/main/resources", "src/vortex/resources", "src/hana/resources")
     }
 }
 
@@ -127,6 +137,8 @@ tasks {
         )
 
         inputs.properties(propertyMap)
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        exclude("fabric.mod.json.bak")
         filesMatching("fabric.mod.json") {
             expand(propertyMap)
         }
@@ -135,48 +147,21 @@ tasks {
     jar {
         inputs.property("archivesName", project.base.archivesName.get())
 
-        // The vortex addon is packaged into its own jar.
-        exclude("com/vortex/**")
-
-        from("LICENSE") {
-            rename { "${it}_${inputs.properties["archivesName"]}" }
-        }
-    }
-
-    val vortexJar = register<Jar>("vortexJar") {
-        dependsOn("classes")
-
-        archiveBaseName.set("vortex")
-        archiveVersion.set(project.version.toString())
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-        // Include ALL compiled classes (superprinter + vortex)
-        from(sourceSets.main.get().output) {
-            exclude("fabric.mod.json")
-        }
-        from(layout.projectDirectory.dir("src/main/resources")) {
-            include("vortex_printer.mixins.json")
-            include("superprinter.mixins.json")
-            include("printer.accesswidener")
-            include("assets/**")
-        }
         // Bundle quietee-utils classes inside the vortex jar
         from(zipTree("libs/quiettee-utils-1.0.0+mc26.1.jar")) {
             exclude("fabric.mod.json")
         }
-        from(layout.projectDirectory.dir("src/vortex/resources")) {
-            exclude("fabric.mod.json")
-        }
-        from(layout.projectDirectory.file("src/vortex/resources/fabric.mod.json")) {
-            expand(mapOf(
-                "version" to project.version,
-                "minecraft_version" to toMinecraftCompat(libs.versions.minecraft.get()),
-                "jdk_version" to libs.versions.jdk.get(),
-            ))
-        }
+        // Bundle pinyin4j inside the vortex jar
+        from({
+            configurations.runtimeClasspath.get()
+                .filter { it.name.contains("pinyin4j") }
+                .map { zipTree(it) }
+        })
 
         from("LICENSE") {
-            rename { "${it}_$name" }
+            rename { "${it}_${inputs.properties["archivesName"]}" }
         }
     }
 
@@ -191,7 +176,6 @@ tasks {
 
     register<Copy>("deploy") {
         dependsOn("build")
-        dependsOn(vortexJar)
 
         doFirst {
             if (!deployModsDir.isDirectory) {

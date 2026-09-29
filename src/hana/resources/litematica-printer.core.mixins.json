@@ -1,0 +1,33 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.aleksilassila.litematica.printer.mixin",
+  "plugin": "me.aleksilassila.litematica.printer.mixin_plugin.ChestTrackerMixinConfigPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "printer.mc.MixinBlockItem",
+    "printer.mc.MixinConnection",
+    "printer.mc.MixinServerboundMovePlayerPacket"
+  ],
+  "client": [
+    "MixinClientPacketListener",
+    "MixinContainerScreenGuard",
+    "MixinMinecraftManualUse",
+    "MixinMinecraftPickBlock",
+    "printer.mc.BeaconBlockEntityAccessor",
+    "printer.mc.BeaconButtonAccessor",
+    "printer.mc.BeaconScreenMixin",
+    "printer.mc.MixinClientLevel",
+    "printer.mc.MixinClientPacketListener",
+    "printer.mc.MixinGui",
+    "printer.mc.MixinLocalPlayer",
+    "printer.mc.MixinKeyboardInput",
+    "printer.mc.ClientInputAccessor",
+    "printer.chesttracker.ItemListWidgetAccessor",
+    "printer.chesttracker.ItemListWidgetMixin",
+    "printer.mc.MixinMultiPlayerGameMode"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

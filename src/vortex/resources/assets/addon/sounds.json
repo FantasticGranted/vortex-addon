@@ -1,0 +1,12 @@
+{
+  "metal_pipe": {
+    "sounds": [
+      "addon:metal_pipe"
+    ]
+  },
+  "vine_boom": {
+    "sounds": [
+      "addon:vine_boom"
+    ]
+  }
+}
