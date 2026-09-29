@@ -1,0 +1,12 @@
+{
+  "metal_pipe": {
+    "sounds": [
+      "metal_pipe"
+    ]
+  },
+  "vine_boom": {
+    "sounds": [
+      "vine_boom"
+    ]
+  }
+}

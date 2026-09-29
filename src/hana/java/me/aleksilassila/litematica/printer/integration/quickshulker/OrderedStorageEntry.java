@@ -1,0 +1,43 @@
+package me.aleksilassila.litematica.printer.integration.quickshulker;
+
+import net.minecraft.world.item.ItemStack;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+final class OrderedStorageEntry {
+    final ItemStack itemStack;
+    final ItemStack shulkerStack;
+    final List<ItemStack> shulkerSnapshot;
+    final Set<Integer> attemptedShulkerMenuSlots = new HashSet<>();
+    final int sourceContainerSlot;
+    int shulkerInventoryMenuSlot;
+    int playerInventorySlot;
+    long lastUseTick;
+
+    OrderedStorageEntry(
+            ItemStack itemStack,
+            ItemStack shulkerStack,
+            int sourceContainerSlot,
+            int shulkerInventoryMenuSlot,
+            int playerInventorySlot,
+            long currentTick
+    ) {
+        this.itemStack = itemStack.copy();
+        this.itemStack.setCount(1);
+        this.shulkerStack = shulkerStack == null ? ItemStack.EMPTY : shulkerStack.copy();
+        if (!this.shulkerStack.isEmpty()) {
+            this.shulkerStack.setCount(1);
+        }
+        this.shulkerSnapshot = OrderedStorageStacks.snapshotShulker(shulkerStack);
+        this.sourceContainerSlot = sourceContainerSlot;
+        this.shulkerInventoryMenuSlot = shulkerInventoryMenuSlot;
+        this.playerInventorySlot = playerInventorySlot;
+        this.lastUseTick = currentTick;
+    }
+
+    void markUsed(long currentTick) {
+        this.lastUseTick = currentTick;
+    }
+}
