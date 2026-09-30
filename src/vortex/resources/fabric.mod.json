@@ -36,7 +36,6 @@
   "accessWidener": "printer.accesswidener",
   "mixins": [
     "vortex_printer.mixins.json",
-    "superprinter.mixins.json",
     "quiettee-utils.mixins.json",
     "addon-template.mixins.json",
     "litematica-printer.core.mixins.json",
