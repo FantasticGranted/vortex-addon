@@ -5,6 +5,7 @@ import com.mojang.logging.LogUtils;
 import com.quiettee.utils.QuietteeUtils;
 import com.vortex.commands.ChestSearchCommand;
 import com.vortex.commands.RegearCommand;
+import com.vortex.commands.StashFinderCommand;
 import com.vortex.modules.Aura;
 import com.vortex.modules.AutoRegear;
 import com.vortex.modules.CAura;
@@ -17,6 +18,7 @@ import com.vortex.modules.ShulkerRegear;
 import com.vortex.modules.SkinBlink;
 import com.vortex.modules.Spear;
 import com.vortex.printer.modules.CarpetPrinter;
+import com.vortex.printer.modules.FullBlockPrinter;
 import com.vortex.printer.modules.MapNamer;
 import com.vortex.printer.modules.StaircasedPrinter;
 import com.vortex.printer.utils.MapAreaCache;
@@ -71,11 +73,13 @@ public class Vortex extends MeteorAddon {
 
         // Printer modules
         Modules.get().add(new CarpetPrinter());
+        Modules.get().add(new FullBlockPrinter());
         Modules.get().add(new StaircasedPrinter());
         Modules.get().add(new MapNamer());
 
         Commands.add(new RegearCommand());
         Commands.add(new ChestSearchCommand());
+        Commands.add(new StashFinderCommand());
 
         // Delegated bundled addons (single meteor entrypoint)
         quietteeUtils.onInitialize();

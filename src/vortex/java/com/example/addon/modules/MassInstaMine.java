@@ -140,7 +140,7 @@ public class MassInstaMine extends Module {
         super(
             QuinnAddon.CATEGORY,
             "mass-insta-mine",
-            "Mines nearby blocks when you start mining a block. Credits to H_ux, Discord h.u.x."
+            "Mines nearby blocks when you start mining a block. Credits to H_ux, Discord h.u.x.\nFrom: Quinn"
         );
     }
 

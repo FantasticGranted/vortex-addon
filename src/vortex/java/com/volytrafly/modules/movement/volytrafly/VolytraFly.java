@@ -522,7 +522,7 @@ public class VolytraFly extends Module {
     private int verticalStepTicks;
 
     public VolytraFly() {
-        super(Categories.Movement, "volytra-fly", "Specifically designed to maximise elytrafly capabilities and speed on 6b6t");
+        super(Categories.Movement, "volytra-fly", "Specifically designed to maximise elytrafly capabilities and speed on 6b6t\nFrom: Volizray");
     }
 
     @Override

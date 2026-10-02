@@ -304,7 +304,7 @@ public class SurroundPlus extends Module {
         super(
             QuinnAddon.CATEGORY,
             "surround+",
-            "Configurable Surround+ with Anti-FacePlace and optional crystal breaking."
+            "Configurable Surround+ with Anti-FacePlace and optional crystal breaking.\nFrom: Quinn"
         );
     }
 

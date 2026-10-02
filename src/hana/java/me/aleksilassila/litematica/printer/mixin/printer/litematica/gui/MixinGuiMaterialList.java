@@ -1,5 +1,6 @@
 package me.aleksilassila.litematica.printer.mixin.printer.litematica.gui;
 
+import com.vortex.StashFinder;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
@@ -59,12 +60,19 @@ public abstract class MixinGuiMaterialList extends GuiBase {
 
     @Unique
     private void vortex$addExtras(MaterialListBase list, String status) {
+        StashFinder.lastList = list;
+
         final ButtonGeneric packButton = new ButtonGeneric(12, 4, -1, 20, "Pack shulkers");
         packButton.setHoverStrings(status == null || status.isEmpty()
                 ? "Plan shulker packing from this list's missing materials"
                 : status);
         addButton(packButton, (button, mouseButton) ->
                 GuiBase.openGui(new GuiShulkerPackingPlan(list, this)));
+
+        final int stashX = 12 + packButton.getWidth() + 4;
+        final ButtonGeneric stashButton = new ButtonGeneric(stashX, 4, -1, 20, "Stash check");
+        stashButton.setHoverStrings("Cross-reference this list with logged chests (.stashfind)");
+        addButton(stashButton, (button, mouseButton) -> StashFinder.run(list, null));
 
         vortex$addPlacedLabel(list);
     }

@@ -207,7 +207,7 @@ public class LiquidFiller extends Module {
         super(
             QuinnAddon.CATEGORY,
             "liquid-filler",
-            "Automatically fills water and lava blocks within range."
+            "Automatically fills water and lava blocks within range.\nFrom: Quinn"
         );
     }
 

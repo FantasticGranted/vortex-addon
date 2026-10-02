@@ -92,7 +92,7 @@ public class CarpetMap extends Module {
     private boolean printerWasActive;
 
     public CarpetMap() {
-        super(SuperPrinter.CATEGORY, "carpet-map", "Walks to the next block the printer needs to place and restocks materials from shulkers.");
+        super(SuperPrinter.CATEGORY, "carpet-map", "Walks to the next block the printer needs to place and restocks materials from shulkers.\nFrom: numericly");
     }
 
     @Override

@@ -170,7 +170,7 @@ public class ModulePrinter extends Module {
     private final List<CompletedTask> completedTasks = new ArrayList<>();
 
     public ModulePrinter() {
-        super(SuperPrinter.CATEGORY, "printer", "Prints litematica schematics.");
+        super(SuperPrinter.CATEGORY, "printer", "Prints litematica schematics.\nFrom: numericly");
     }
 
     @Override

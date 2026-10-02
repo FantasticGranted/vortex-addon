@@ -203,7 +203,7 @@ public class BedrockNuker extends Module {
         super(
             QuinnAddon.CATEGORY,
             "bedrock-nuker",
-            "Automatically mines nearby bedrock."
+            "Automatically mines nearby bedrock.\nFrom: Quinn"
         );
     }
 

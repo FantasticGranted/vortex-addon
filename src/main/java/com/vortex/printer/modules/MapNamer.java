@@ -178,10 +178,10 @@ public class MapNamer extends Module {
             if (currentY == -1) currentY = startY.get();
 
             IClientPlayerInteractionManager cim = (IClientPlayerInteractionManager) mc.gameMode;
-            cim.clickSlot(mc.player.containerMenu.containerId, slot, 1, ContainerInput.QUICK_MOVE, mc.player);
+            cim.handleContainerInput(mc.player.containerMenu.containerId, slot, 1, ContainerInput.QUICK_MOVE, mc.player);
             String newMapName = mapName.get() + currentX + separator + currentY;
             mc.getConnection().getConnection().send(new ServerboundRenameItemPacket(newMapName));
-            cim.clickSlot(mc.player.containerMenu.containerId, 2, 1, ContainerInput.QUICK_MOVE, mc.player);
+            cim.handleContainerInput(mc.player.containerMenu.containerId, 2, 1, ContainerInput.QUICK_MOVE, mc.player);
 
             currentY++;
             if (currentY > endY.get()) {
