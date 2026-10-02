@@ -58,6 +58,33 @@ public final class Utils {
         return stacks;
     }
 
+    public static HashMap<Item, Integer> getRequiredItems(BlockPos mapCorner, Pair<Integer, Integer> interval, int linesPerRun, int availableSlotsSize, Block[][] map) {
+        HashMap<Item, Integer> requiredItems = new HashMap<>();
+        boolean isStartSide = true;
+        for (int x = interval.getLeft(); x <= interval.getRight(); x += linesPerRun) {
+            for (int z = 0; z < 128; z++) {
+                for (int lineBonus = 0; lineBonus < linesPerRun; lineBonus++) {
+                    int adjustedX = x + lineBonus;
+                    if (adjustedX > interval.getRight()) break;
+                    int adjustedZ = z;
+                    if (!isStartSide) adjustedZ = 127 - z;
+                    BlockState blockState = MapAreaCache.getCachedBlockState(mapCorner.offset(adjustedX, 0, adjustedZ));
+                    if (blockState.isAir() && map[adjustedX][adjustedZ] != null) {
+                        Item material = map[adjustedX][adjustedZ].asItem();
+                        if (!requiredItems.containsKey(material)) requiredItems.put(material, 0);
+                        requiredItems.put(material, requiredItems.get(material) + 1);
+                        if (stacksRequired(requiredItems.values()) > availableSlotsSize) {
+                            requiredItems.put(material, requiredItems.get(material) - 1);
+                            return requiredItems;
+                        }
+                    }
+                }
+            }
+            isStartSide = !isStartSide;
+        }
+        return requiredItems;
+    }
+
     public static ArrayList<Integer> getAvailableSlots(HashMap<Item, ArrayList<Pair<BlockPos, net.minecraft.world.phys.Vec3>>> materials) {
         ArrayList<Integer> slots = new ArrayList<>();
         for (int slot = 0; slot < 36; slot++) {
@@ -160,7 +187,51 @@ public final class Utils {
     public static void performSwap(int fromSlot, int toSlot) {
         mc.player.getInventory().setSelectedSlot(toSlot);
         IClientPlayerInteractionManager cim = (IClientPlayerInteractionManager) mc.gameMode;
-        cim.clickSlot(mc.player.containerMenu.containerId, fromSlot, toSlot, ContainerInput.SWAP, mc.player);
+        cim.handleContainerInput(mc.player.containerMenu.containerId, fromSlot, toSlot, ContainerInput.SWAP, mc.player);
+    }
+
+    public static void swapIntoHotbar(int slot, ArrayList<Integer> hotBarSlots) {
+        HashMap<Item, Integer> itemFrequency = new HashMap<>();
+        HashMap<Item, Integer> itemSlot = new HashMap<>();
+        int targetSlot = hotBarSlots.get(0);
+
+        for (int i : hotBarSlots) {
+            if (!mc.player.getInventory().getItem(i).isEmpty()) {
+                Item item = mc.player.getInventory().getItem(i).getItem();
+                if (!itemFrequency.containsKey(item)) {
+                    itemFrequency.put(item, 1);
+                    itemSlot.put(item, i);
+                } else {
+                    itemFrequency.put(item, itemFrequency.get(item) + 1);
+                }
+            }
+        }
+        int topFrequency = 0;
+        ArrayList<Item> topFrequencyItems = new ArrayList<>();
+        for (Item item : itemFrequency.keySet()) {
+            if (itemFrequency.get(item) > topFrequency) {
+                topFrequency = itemFrequency.get(item);
+                topFrequencyItems = new ArrayList<>(Collections.singletonList(item));
+            } else if (itemFrequency.get(item) == topFrequency) {
+                topFrequencyItems.add(item);
+            }
+        }
+        if (!topFrequencyItems.isEmpty()) {
+            Random random = new Random();
+            Item item = topFrequencyItems.get(random.nextInt(topFrequencyItems.size()));
+            targetSlot = itemSlot.get(item);
+        }
+
+        for (int i : hotBarSlots) {
+            if (mc.player.getInventory().getItem(i).isEmpty()) {
+                targetSlot = i;
+            }
+        }
+
+        mc.player.getInventory().setSelectedSlot(targetSlot);
+
+        IClientPlayerInteractionManager cim = (IClientPlayerInteractionManager) mc.gameMode;
+        cim.handleContainerInput(mc.player.containerMenu.containerId, slot, targetSlot, ContainerInput.SWAP, mc.player);
     }
 
     public static void iterateBlocks(BlockPos startingPos, int horizontalRadius, int verticalRadius, BiConsumer<BlockPos, BlockState> function) {

@@ -98,7 +98,7 @@ public class Speed extends Module {
         super(
             QuinnAddon.CATEGORY,
             "speed",
-            "Sets the player's horizontal movement speed."
+            "Sets the player's horizontal movement speed.\nFrom: Quinn"
         );
     }
 

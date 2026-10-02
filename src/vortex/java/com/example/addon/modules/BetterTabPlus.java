@@ -138,7 +138,7 @@ public class BetterTabPlus extends Module {
         super(
             QuinnAddon.CATEGORY,
             "better-tab-plus",
-            "Improves and customizes the Minecraft player tab list."
+            "Improves and customizes the Minecraft player tab list.\nFrom: Quinn"
         );
     }
 

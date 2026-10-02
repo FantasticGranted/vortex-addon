@@ -94,6 +94,13 @@ public class Spear extends Module {
         .build()
     );
 
+    private final Setting<Boolean> throughWalls = sgTargeting.add(new BoolSetting.Builder()
+        .name("through-walls")
+        .description("Keep targets without line of sight.")
+        .defaultValue(false)
+        .build()
+    );
+
     // Render
 
     private final Setting<Boolean> renderTarget = sgRender.add(new BoolSetting.Builder()
@@ -187,7 +194,7 @@ public class Spear extends Module {
         HitResult blockHit = mc.level.clip(new ClipContext(eyePos,
             eyePos.add(lookVec.scale(maxRange)), ClipContext.Block.COLLIDER,
             ClipContext.Fluid.NONE, mc.player));
-        double rayLength = blockHit.getType() == HitResult.Type.MISS ? maxRange :
+        double rayLength = blockHit.getType() == HitResult.Type.MISS || throughWalls.get() ? maxRange :
             eyePos.distanceTo(blockHit.getLocation());
 
         List<Entity> candidates = mc.level.getEntities(mc.player,
@@ -217,7 +224,7 @@ public class Spear extends Module {
                     && player.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) continue;
             }
 
-            if (!canSeeTarget(e)) continue;
+            if (!throughWalls.get() && !canSeeTarget(e)) continue;
 
             Vec3 toEntity = e.getBoundingBox().getCenter().subtract(eyePos).normalize();
             if (lookVec.dot(toEntity) > coneAngle) {

@@ -8,5 +8,5 @@ public interface IClientPlayerInteractionManager {
 
     float getCurrentBreakingProgress();
 
-    void clickSlot(int syncId, int slotId, int button, ContainerInput actionType, Player player);
+    void handleContainerInput(int syncId, int slotId, int button, ContainerInput actionType, Player player);
 }

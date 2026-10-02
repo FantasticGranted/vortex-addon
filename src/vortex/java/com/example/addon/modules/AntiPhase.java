@@ -136,7 +136,7 @@ public class AntiPhase extends Module {
         super(
             QuinnAddon.CATEGORY,
             "antiphase",
-            "Prevents your targets from phasing into blocks."
+            "Prevents your targets from phasing into blocks.\nFrom: Quinn"
         );
     }
 

@@ -20,7 +20,7 @@ public class Reference {
             .getModContainer(MOD_ID)
             .map(container -> container.getMetadata().getVersion().getFriendlyString())
             .orElse("unknown");
-    public static final String GUI_TITLE = MOD_NAME + " - Hana - " + displayBuildVersion(VERSION);
+    public static final String GUI_TITLE = MOD_NAME + " - Hana - by Fractal420 - " + displayBuildVersion(VERSION);
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static String displayBuildVersion(String version) {

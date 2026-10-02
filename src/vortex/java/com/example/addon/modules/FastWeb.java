@@ -30,7 +30,7 @@ public class FastWeb extends Module {
         super(
             QuinnAddon.CATEGORY,
             "fast-web",
-            "Move downward faster while holding Shift inside a cobweb."
+            "Move downward faster while holding Shift inside a cobweb.\nFrom: Quinn"
         );
     }
 

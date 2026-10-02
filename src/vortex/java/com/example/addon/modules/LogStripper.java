@@ -71,7 +71,7 @@ public class LogStripper extends Module {
         super(
             QuinnAddon.CATEGORY,
             "log-stripper",
-            "Places a log above your head, strips it with an axe, breaks it and repeats."
+            "Places a log above your head, strips it with an axe, breaks it and repeats.\nFrom: Quinn"
         );
     }
 

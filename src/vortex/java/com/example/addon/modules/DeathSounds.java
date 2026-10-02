@@ -51,7 +51,7 @@ public class DeathSounds extends Module {
         super(
             QuinnAddon.CATEGORY,
             "death-sounds",
-            "Plays a vanilla sound when a player dies."
+            "Plays a vanilla sound when a player dies.\nFrom: Quinn"
         );
     }
 

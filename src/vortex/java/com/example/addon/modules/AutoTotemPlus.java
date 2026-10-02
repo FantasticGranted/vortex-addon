@@ -188,7 +188,7 @@ public class AutoTotemPlus extends Module {
         super(
             QuinnAddon.CATEGORY,
             "autototem+",
-            "Automatically manages the offhand with Totems, Shields, XP, and enchanted golden apples."
+            "Automatically manages the offhand with Totems, Shields, XP, and enchanted golden apples.\nFrom: Quinn"
         );
     }
 

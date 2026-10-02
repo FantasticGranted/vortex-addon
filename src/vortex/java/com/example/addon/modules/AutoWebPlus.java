@@ -145,7 +145,7 @@ public class AutoWebPlus extends Module {
         super(
             QuinnAddon.CATEGORY,
             "auto-web+",
-            "Automatically places cobwebs at nearby enemy players."
+            "Automatically places cobwebs at nearby enemy players.\nFrom: Quinn"
         );
     }
 
