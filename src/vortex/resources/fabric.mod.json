@@ -20,11 +20,7 @@
   "environment": "client",
   "entrypoints": {
     "meteor": [
-      "com.vortex.Vortex",
-      "com.quiettee.utils.QuietteeUtils",
-      "net.numericly.superprinter.SuperPrinter",
-      "com.volytrafly.VolytraFlyAddon",
-      "com.example.addon.QuinnAddon"
+      "com.vortex.Vortex"
     ],
     "main": [
       "com.example.addon.SoundRegistry"
