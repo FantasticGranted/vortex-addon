@@ -180,6 +180,15 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 .defaultValue(false)
                 .build();
 
+        public static final ConfigBoolean MATERIAL_LIST_AUTO_ADJUST = bool("materialListAutoAdjust")
+                .defaultValue(true)
+                .build();
+
+        public static final ConfigBoolean MATERIAL_LIST_CACHE = bool("materialListCache")
+                .defaultValue(true)
+                .setVisible(MATERIAL_LIST_AUTO_ADJUST::getBooleanValue)
+                .build();
+
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 WORK_SWITCH,
                 WORK_MODE,
@@ -202,7 +211,9 @@ public class Configs extends ConfigBuilders implements IConfigHandler {
                 CHECK_PLAYER_INTERACTION_RANGE,
                 ITERATOR_SHAPE,
                 AUTO_DISABLE_PRINTER,
-                RENDER_ONLY_HOLDING_ITEMS
+                RENDER_ONLY_HOLDING_ITEMS,
+                MATERIAL_LIST_AUTO_ADJUST,
+                MATERIAL_LIST_CACHE
         );
     }
 

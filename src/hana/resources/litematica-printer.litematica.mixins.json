@@ -11,6 +11,7 @@
     "printer.litematica.MixinChunkRenderDispatcherSchematic"
   ],
   "client": [
+    "printer.litematica.gui.MixinGuiMaterialList",
     "printer.litematica.gui.MixinLitematicaGuiMainMenu"
   ],
   "injectors": {
