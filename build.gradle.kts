@@ -144,24 +144,80 @@ tasks {
         }
     }
 
+    // Vortex core jar
     jar {
         inputs.property("archivesName", project.base.archivesName.get())
-
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        // Bundle quietee-utils classes inside the vortex jar
-        from(zipTree("libs/quiettee-utils-1.0.0+mc26.1.jar")) {
-            exclude("fabric.mod.json")
-        }
-        // Bundle pinyin4j inside the vortex jar
-        from({
-            configurations.runtimeClasspath.get()
-                .filter { it.name.contains("pinyin4j") }
-                .map { zipTree(it) }
-        })
 
         from("LICENSE") {
             rename { "${it}_${inputs.properties["archivesName"]}" }
+        }
+
+        include("com/vortex/**")
+        include("com/example/**")
+        include("assets/vortex/**")
+        include("fabric.mod.json")
+    }
+
+    // VolytraFly jar
+    register<Jar>("volytraflyJar") {
+        group = "build"
+        archiveBaseName.set("volytrafly")
+        archiveVersion.set(project.version.toString())
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        from(sourceSets.main.get().output) {
+            include("com/volytrafly/**")
+        }
+        from("src/vortex/resources") {
+            include("fabric.mod.json.volytrafly")
+            rename { "fabric.mod.json" }
+            include("printer.accesswidener")
+            include("assets/volytrafly/**")
+        }
+        from("LICENSE") {
+            rename { "${it}_volytrafly" }
+        }
+    }
+
+    // SuperPrinter jar
+    register<Jar>("superprinterJar") {
+        group = "build"
+        archiveBaseName.set("superprinter")
+        archiveVersion.set(project.version.toString())
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        from(sourceSets.main.get().output) {
+            include("net/numericly/superprinter/**")
+        }
+        from("src/main/resources") {
+            include("fabric.mod.json.superprinter")
+            rename { "fabric.mod.json" }
+            include("printer.accesswidener")
+        }
+        from("LICENSE") {
+            rename { "${it}_superprinter" }
+        }
+    }
+
+    // Hana Printer jar
+    register<Jar>("hanaJar") {
+        group = "build"
+        archiveBaseName.set("hana-printer")
+        archiveVersion.set(project.version.toString())
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        from(sourceSets.main.get().output) {
+            include("me/aleksilassila/litematica/**")
+        }
+        from("src/hana/resources") {
+            include("fabric.mod.json.hana")
+            rename { "fabric.mod.json" }
+            include("printer.accesswidener")
+            include("assets/hana-printer/**")
+        }
+        from("LICENSE") {
+            rename { "${it}_hana-printer" }
         }
     }
 
@@ -175,7 +231,7 @@ tasks {
     }
 
     register<Copy>("deploy") {
-        dependsOn("build")
+        dependsOn("build", "volytraflyJar", "superprinterJar", "hanaJar")
 
         doFirst {
             if (!deployModsDir.isDirectory) {
@@ -192,7 +248,7 @@ tasks {
             deployModsDir.listFiles { f ->
                 f.isFile &&
                     f.extension == "jar" &&
-                    (f.name.startsWith("superprinter-") || f.name.startsWith("vortex-")) &&
+                    (f.name.startsWith("superprinter-") || f.name.startsWith("vortex-") || f.name.startsWith("volytrafly-") || f.name.startsWith("hana-printer-")) &&
                     f.name != targetJar.name
             }?.forEach { it.delete() }
 
@@ -201,6 +257,9 @@ tasks {
 
         from(layout.buildDirectory.dir("libs")) {
             include("vortex-${project.version}.jar")
+            include("volytrafly-${project.version}.jar")
+            include("superprinter-${project.version}.jar")
+            include("hana-printer-${project.version}.jar")
         }
         into(deployModsDir)
 
