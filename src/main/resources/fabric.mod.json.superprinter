@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "superprinter",
+  "version": "${version}",
+  "name": "Super Printer",
+  "description": "Schematic printer for Meteor Client 26.1.2 with litematica/malilib integration",
+  "authors": ["numericly"],
+  "contact": {
+    "sources": "https://github.com/FantasticGranted/vortex-addon"
+  },
+  "icon": "assets/superprinter/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "meteor": [
+      "net.numericly.superprinter.SuperPrinter"
+    ]
+  },
+  "accessWidener": "printer.accesswidener",
+  "mixins": [
+    "vortex_printer.mixins.json"
+  ],
+  "custom": {
+    "meteor-client:color": "0,255,220",
+    "modmenu": {
+      "parent": {
+        "id": "meteor-client"
+      }
+    }
+  },
+  "depends": {
+    "java": ">=${jdk_version}",
+    "minecraft": "${minecraft_version}",
+    "meteor-client": "*",
+    "litematica": "*",
+    "malilib": "*"
+  }
+}

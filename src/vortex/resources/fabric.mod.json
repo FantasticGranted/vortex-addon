@@ -24,20 +24,13 @@
     ],
     "main": [
       "com.example.addon.SoundRegistry"
-    ],
-    "client": [
-      "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
     ]
   },
   "accessWidener": "printer.accesswidener",
   "mixins": [
     "vortex_printer.mixins.json",
     "quiettee-utils.mixins.json",
-    "addon-template.mixins.json",
-    "litematica-printer.core.mixins.json",
-    "litematica-printer.litematica.mixins.json",
-    "litematica-printer.malilib.mixins.json",
-    "litematica-printer.optional.mixins.json"
+    "addon-template.mixins.json"
   ],
   "custom": {
     "meteor-client:color": "0,255,220",
@@ -50,8 +43,6 @@
   "depends": {
     "java": ">=${jdk_version}",
     "minecraft": "${minecraft_version}",
-    "meteor-client": "*",
-    "litematica": "*",
-    "malilib": "*"
+    "meteor-client": "*"
   }
 }
