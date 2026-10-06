@@ -153,6 +153,15 @@ tasks {
         exclude("fabric.mod.json.superprinter")
         exclude("fabric.mod.json.volytrafly")
 
+        from(zipTree("libs/quiettee-utils-1.0.0+mc26.1.jar")) {
+            exclude("fabric.mod.json")
+        }
+        from({
+            configurations.runtimeClasspath.get()
+                .filter { it.name.contains("pinyin4j") }
+                .map { zipTree(it) }
+        })
+
         from("LICENSE") {
             rename { "${it}_${inputs.properties["archivesName"]}" }
         }
@@ -257,7 +266,7 @@ tasks {
             deployModsDir.listFiles { f ->
                 f.isFile &&
                     f.extension == "jar" &&
-                    (f.name.startsWith("superprinter-") || f.name.startsWith("vortex-") || f.name.startsWith("volytrafly-") || f.name.startsWith("hana-printer-")) &&
+                    f.name.startsWith("vortex-") &&
                     f.name != targetJar.name
             }?.forEach { it.delete() }
 
@@ -266,9 +275,6 @@ tasks {
 
         from(layout.buildDirectory.dir("libs")) {
             include("vortex-${project.version}.jar")
-            include("volytrafly-${project.version}.jar")
-            include("superprinter-${project.version}.jar")
-            include("hana-printer-${project.version}.jar")
         }
         into(deployModsDir)
 
