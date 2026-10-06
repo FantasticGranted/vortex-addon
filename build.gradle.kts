@@ -149,14 +149,23 @@ tasks {
         inputs.property("archivesName", project.base.archivesName.get())
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
+        exclude("fabric.mod.json.hana")
+        exclude("fabric.mod.json.superprinter")
+        exclude("fabric.mod.json.volytrafly")
+
         from("LICENSE") {
             rename { "${it}_${inputs.properties["archivesName"]}" }
         }
 
-        include("com/vortex/**")
-        include("com/example/**")
-        include("assets/vortex/**")
-        include("fabric.mod.json")
+        from(sourceSets.main.get().output) {
+            include("com/vortex/**")
+            include("com/example/**")
+        }
+        from("src/vortex/resources") {
+            include("assets/vortex/**")
+            include("fabric.mod.json")
+            include("printer.accesswidener")
+        }
     }
 
     // VolytraFly jar
