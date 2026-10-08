@@ -11,6 +11,7 @@ import com.vortex.modules.AutoRegear;
 import com.vortex.modules.CAura;
 import com.vortex.modules.ChestIndex;
 import com.vortex.modules.ChestSearchModule;
+import com.vortex.modules.CleanGui;
 import com.vortex.modules.ElytraJet;
 import com.vortex.modules.NoGlitchBlocks;
 import com.vortex.modules.PingSpoof;
@@ -70,6 +71,7 @@ public class Vortex extends MeteorAddon {
         Modules.get().add(new PingSpoof());
         Modules.get().add(new SkinBlink());
         Modules.get().add(new Spear());
+        Modules.get().add(new CleanGui());
 
         // Printer modules
         Modules.get().add(new CarpetPrinter());
