@@ -3,7 +3,8 @@
   "package": "com.example.addon.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "BetterTabPlusMixin"
+    "BetterTabPlusMixin",
+    "FriendsCommandMixin"
   ],
   "injectors": {
     "defaultRequire": 1
