@@ -18,6 +18,7 @@ import com.vortex.modules.PingSpoof;
 import com.vortex.modules.ShulkerRegear;
 import com.vortex.modules.SkinBlink;
 import com.vortex.modules.Spear;
+import com.vortex.modules.TotemTracker;
 import com.vortex.printer.modules.CarpetPrinter;
 import com.vortex.printer.modules.FullBlockPrinter;
 import com.vortex.printer.modules.MapNamer;
@@ -72,6 +73,7 @@ public class Vortex extends MeteorAddon {
         Modules.get().add(new SkinBlink());
         Modules.get().add(new Spear());
         Modules.get().add(new CleanGui());
+        Modules.get().add(new TotemTracker());
 
         // Printer modules
         Modules.get().add(new CarpetPrinter());
