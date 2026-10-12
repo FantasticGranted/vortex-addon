@@ -88,7 +88,7 @@ dependencies {
     implementation("com.belerweb:pinyin4j:2.5.1")
 
     // Quietee Utils
-    implementation(files("libs/quiettee-utils-1.0.0+mc26.1.jar"))
+    implementation(files("libs/quiettee-utils-1.0.0+mc26.2.jar"))
 }
 
 sourceSets {
@@ -153,7 +153,7 @@ tasks {
         exclude("fabric.mod.json.superprinter")
         exclude("fabric.mod.json.volytrafly")
 
-        from(zipTree("libs/quiettee-utils-1.0.0+mc26.1.jar")) {
+        from(zipTree("libs/quiettee-utils-1.0.0+mc26.2.jar")) {
             exclude("fabric.mod.json")
         }
         from({
