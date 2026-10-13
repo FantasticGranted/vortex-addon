@@ -13,6 +13,7 @@ import com.vortex.modules.ChestIndex;
 import com.vortex.modules.ChestSearchModule;
 import com.vortex.modules.CleanGui;
 import com.vortex.modules.ElytraJet;
+import com.vortex.modules.KeyPearl;
 import com.vortex.modules.NoGlitchBlocks;
 import com.vortex.modules.PingSpoof;
 import com.vortex.modules.ShulkerRegear;
@@ -74,6 +75,7 @@ public class Vortex extends MeteorAddon {
         Modules.get().add(new Spear());
         Modules.get().add(new CleanGui());
         Modules.get().add(new TotemTracker());
+        Modules.get().add(new KeyPearl());
 
         // Printer modules
         Modules.get().add(new CarpetPrinter());
