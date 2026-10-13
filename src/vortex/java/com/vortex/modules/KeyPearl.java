@@ -11,6 +11,7 @@ import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
@@ -26,16 +27,18 @@ public class KeyPearl extends Module {
     );
 
     private boolean swapSent;
-    private int pendingHandlerSlot = -1;
+    private int originSlot = -1;
+    private int targetSlot = -1;
 
     public KeyPearl() {
-        super(Vortex.CATEGORY, "key-pearl", "Throws an ender pearl where you're looking using an offhand swap.");
+        super(Vortex.CATEGORY, "key-pearl", "Throws an ender pearl where you're looking using an alt swap.");
     }
 
     @Override
     public void onActivate() {
         swapSent = false;
-        pendingHandlerSlot = -1;
+        originSlot = -1;
+        targetSlot = -1;
     }
 
     @EventHandler
@@ -47,39 +50,54 @@ public class KeyPearl extends Module {
 
         if (mc.screen != null) return;
 
-        if (mc.player.getOffhandItem().is(Items.ENDER_PEARL)) {
-            mc.gameMode.useItem(mc.player, InteractionHand.OFF_HAND);
-            mc.player.swing(InteractionHand.OFF_HAND);
+        if (mc.player.getMainHandItem().is(Items.ENDER_PEARL)) {
+            mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+            mc.player.swing(InteractionHand.MAIN_HAND);
 
-            if (swapBack.get() && pendingHandlerSlot != -1) {
-                mc.gameMode.handleContainerInput(mc.player.containerMenu.containerId, pendingHandlerSlot, 40, ContainerInput.SWAP, mc.player);
-            }
-
+            if (swapBack.get() && originSlot != -1) altSwap();
             toggle();
             return;
         }
 
         if (swapSent) {
+            if (swapBack.get() && originSlot != -1) {
+                ItemStack stack = mc.player.getInventory().getItem(targetSlot);
+                if (stack.isEmpty() || stack.is(Items.ENDER_PEARL)) altSwap();
+            }
             toggle();
             return;
         }
 
-        FindItemResult pearl = InvUtils.findInHotbar(Items.ENDER_PEARL);
-        int inventorySlot;
-
-        if (pearl.found() && !pearl.isOffhand()) {
-            inventorySlot = pearl.slot();
-        } else {
-            FindItemResult any = InvUtils.find(Items.ENDER_PEARL);
-            if (!any.found()) {
-                toggle();
-                return;
-            }
-            inventorySlot = any.slot();
+        if (mc.player.getOffhandItem().is(Items.ENDER_PEARL)) {
+            mc.gameMode.useItem(mc.player, InteractionHand.OFF_HAND);
+            mc.player.swing(InteractionHand.OFF_HAND);
+            toggle();
+            return;
         }
 
-        pendingHandlerSlot = inventorySlot <= 8 ? 36 + inventorySlot : inventorySlot;
-        mc.gameMode.handleContainerInput(mc.player.containerMenu.containerId, pendingHandlerSlot, 40, ContainerInput.SWAP, mc.player);
+        int selected = mc.player.getInventory().getSelectedSlot();
+        FindItemResult hotbar = InvUtils.findInHotbar(Items.ENDER_PEARL);
+        int invSlot = -1;
+
+        if (hotbar.found() && !hotbar.isOffhand()) {
+            invSlot = hotbar.slot();
+        } else {
+            FindItemResult any = InvUtils.find(Items.ENDER_PEARL);
+            if (any.found() && any.slot() >= 9 && any.slot() <= 35) invSlot = any.slot();
+        }
+
+        if (invSlot == -1 || invSlot == selected) {
+            toggle();
+            return;
+        }
+
+        targetSlot = selected;
+        originSlot = invSlot <= 8 ? 36 + invSlot : invSlot;
+        altSwap();
         swapSent = true;
+    }
+
+    private void altSwap() {
+        mc.gameMode.handleContainerInput(mc.player.containerMenu.containerId, originSlot, targetSlot, ContainerInput.SWAP, mc.player);
     }
 }
