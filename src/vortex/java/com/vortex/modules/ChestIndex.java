@@ -293,7 +293,7 @@ public class ChestIndex extends Module
     @EventHandler
     private void onTick(TickEvent.Pre event)
     {
-        if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.ContainerScreen) return;
+        if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.ContainerScreen) return;
 
         if (tickCounter < delay.get())
         {

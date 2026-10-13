@@ -44,7 +44,7 @@ public class BlockUtilsMixin {
             return;
         }
 
-        Vec3 lookVec = blockPos.getCenter().subtract(mc.player.getEyePosition());
+        Vec3 lookVec = Vec3.atCenterOf(blockPos).subtract(mc.player.getEyePosition());
         Direction bestDirection = null;
         double bestScore = Double.NEGATIVE_INFINITY;
 

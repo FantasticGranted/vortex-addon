@@ -30,6 +30,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
@@ -72,7 +73,7 @@ public class CAura extends Module {
         .name("entities")
         .description("Entities to attack.")
         .onlyAttackable()
-        .defaultValue(EntityType.PLAYER)
+        .defaultValue(EntityTypes.PLAYER)
         .build()
     );
 

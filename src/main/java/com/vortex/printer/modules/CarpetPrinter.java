@@ -549,7 +549,7 @@ public class CarpetPrinter extends Module implements MapPrinter {
                 Utils.getOneItem(paneSlot, true, availableSlots, availableHotBarSlots, packet);
                 mc.player.getInventory().setSelectedSlot(availableHotBarSlots.get(0));
 
-                Vec3 center = mapCorner.getCenter().add(map.length / 2 - 1, 0, map[0].length / 2 - 1);
+                Vec3 center = Vec3.atCenterOf(mapCorner).add(map.length / 2 - 1, 0, map[0].length / 2 - 1);
                 checkpoints.add(new Pair<>(center, new Pair<>("fillMap", null)));
                 state = State.Walking;
                 break;
@@ -652,7 +652,7 @@ public class CarpetPrinter extends Module implements MapPrinter {
             closeResetChestTicks--;
             if (closeResetChestTicks == 0) {
                 mc.player.closeContainer();
-                Vec3 center = mapCorner.getCenter().add(map.length / 2, 0, map[0].length / 2);
+                Vec3 center = Vec3.atCenterOf(mapCorner).add(map.length / 2, 0, map[0].length / 2);
                 checkpoints.add(0, new Pair<>(center, new Pair<>("awaitClear", null)));
                 state = State.Walking;
                 info("close reset chest");
@@ -692,8 +692,8 @@ public class CarpetPrinter extends Module implements MapPrinter {
                 miningPos = null;
                 state = State.Walking;
             } else {
-                float yaw = (float) Rotations.getYaw(miningPos.getCenter());
-                float pitch = (float) Rotations.getPitch(miningPos.getCenter());
+                float yaw = (float) Rotations.getYaw(Vec3.atCenterOf(miningPos));
+                float pitch = (float) Rotations.getPitch(Vec3.atCenterOf(miningPos));
                 mc.getConnection().getConnection().send(new ServerboundMovePlayerPacket.Rot(yaw, pitch, false, false));
                 BlockUtils.breakBlock(miningPos, true);
                 return;
@@ -734,7 +734,7 @@ public class CarpetPrinter extends Module implements MapPrinter {
         }
 
         if (closeNextInvPacket) {
-            if (mc.screen != null) {
+            if (mc.gui.screen() != null) {
                 mc.player.closeContainer();
             }
             closeNextInvPacket = false;
@@ -753,7 +753,7 @@ public class CarpetPrinter extends Module implements MapPrinter {
             checkpoints.remove(0);
             switch (checkpointAction.getLeft()) {
                 case "lineEnd":
-                    boolean reachedNorthSide = goal.z == mapCorner.getCenter().z;
+                    boolean reachedNorthSide = goal.z == Vec3.atCenterOf(mapCorner).z;
                     calculateBuildingPath(reachedNorthSide, false);
                     ArrayList<BlockPos> newErrors = Utils.getInvalidPlacements(mapCorner, workingInterval, map, knownErrors);
                     for (BlockPos errorPos : newErrors) {
@@ -829,8 +829,8 @@ public class CarpetPrinter extends Module implements MapPrinter {
                     state = State.AwaitBlockBreak;
                     miningPos = checkpointAction.getRight();
                     Utils.setForwardPressed(false);
-                    float yaw = (float) Rotations.getYaw(miningPos.getCenter());
-                    float pitch = (float) Rotations.getPitch(miningPos.getCenter());
+                    float yaw = (float) Rotations.getYaw(Vec3.atCenterOf(miningPos));
+                    float pitch = (float) Rotations.getPitch(Vec3.atCenterOf(miningPos));
                     mc.getConnection().getConnection().send(new ServerboundMovePlayerPacket.Rot(yaw, pitch, false, false));
                 BlockUtils.breakBlock(miningPos, true);
                     return;
@@ -853,13 +853,13 @@ public class CarpetPrinter extends Module implements MapPrinter {
                         for (int i = knownErrors.size() - 1; i >= 0; i--) {
                             BlockPos errorPos = knownErrors.get(i);
                             info("Pos: " + errorPos.toShortString());
-                            checkpoints.add(new Pair<>(errorPos.getCenter(), new Pair<>("break", errorPos)));
+                            checkpoints.add(new Pair<>(Vec3.atCenterOf(errorPos), new Pair<>("break", errorPos)));
                         }
                         checkpoints.add(new Pair<>(dumpStation.getLeft(), new Pair<>("dump", null)));
                         for (int i = 0; i < knownErrors.size(); i++) {
                             String action = (i == knownErrors.size() - 1) ? "lineEnd" : "sprint";
                             BlockPos errorPos = knownErrors.get(i);
-                            checkpoints.add(new Pair<>(errorPos.getCenter(), new Pair<>(action, null)));
+                            checkpoints.add(new Pair<>(Vec3.atCenterOf(errorPos), new Pair<>(action, null)));
                         }
                         knownErrors.clear();
                         return;
@@ -1045,10 +1045,10 @@ public class CarpetPrinter extends Module implements MapPrinter {
     private void interactWithBlock(BlockPos blockPos) {
         Utils.setForwardPressed(false);
         mc.player.setDeltaMovement(0, 0, 0);
-        mc.player.setYRot((float) Rotations.getYaw(blockPos.getCenter()));
-        mc.player.setXRot((float) Rotations.getPitch(blockPos.getCenter()));
+        mc.player.setYRot((float) Rotations.getYaw(Vec3.atCenterOf(blockPos)));
+        mc.player.setXRot((float) Rotations.getPitch(Vec3.atCenterOf(blockPos)));
 
-        BlockHitResult hitResult = new BlockHitResult(blockPos.getCenter(), Utils.getInteractionSide(blockPos), blockPos, false);
+        BlockHitResult hitResult = new BlockHitResult(Vec3.atCenterOf(blockPos), Utils.getInteractionSide(blockPos), blockPos, false);
         BlockUtils.interact(hitResult, InteractionHand.MAIN_HAND, true);
         interactTimeout = retryInteractTimer.get();
         lastInteractedBlockPos = blockPos;
@@ -1104,8 +1104,8 @@ public class CarpetPrinter extends Module implements MapPrinter {
                 if (!lineFinished) break;
             }
             if (lineFinished) continue;
-            Vec3 cp1 = mapCorner.getCenter().add(x, 0, 0);
-            Vec3 cp2 = mapCorner.getCenter().add(x, 0, 127);
+            Vec3 cp1 = Vec3.atCenterOf(mapCorner).add(x, 0, 0);
+            Vec3 cp2 = Vec3.atCenterOf(mapCorner).add(x, 0, 127);
             if (northToSouth) {
                 checkpoints.add(new Pair<>(cp1, new Pair<>("", null)));
                 checkpoints.add(new Pair<>(cp2, new Pair<>("lineEnd", null)));

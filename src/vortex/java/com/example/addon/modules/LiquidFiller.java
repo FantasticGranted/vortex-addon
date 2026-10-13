@@ -26,6 +26,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.BlockPos;
@@ -347,7 +348,7 @@ public class LiquidFiller extends Module {
                     }
 
                     if (!PlayerUtils.isWithin(
-                        pos.getCenter(),
+                        Vec3.atCenterOf(pos),
                         range.get()
                     )) {
                         continue;
@@ -481,7 +482,7 @@ public class LiquidFiller extends Module {
 
     private double distanceToPlayer(BlockPos pos) {
         return mc.player.getEyePosition().distanceToSqr(
-            pos.getCenter()
+            Vec3.atCenterOf(pos)
         );
     }
 

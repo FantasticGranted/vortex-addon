@@ -280,7 +280,7 @@ public class AutoTotemPlus extends Module {
         }
 
         boolean guiOpen =
-            mc.screen != null;
+            mc.gui.screen() != null;
 
         // ========================================================
         // RIGHT-CLICK APPLE
@@ -1110,7 +1110,7 @@ public class AutoTotemPlus extends Module {
             return;
         }
 
-        if (mc.screen != null) {
+        if (mc.gui.screen() != null) {
             return;
         }
 

@@ -180,7 +180,7 @@ public class ShulkerRegear extends Module {
     }
 
     private void tryTrigger() {
-        if (mc.screen != null) return;
+        if (mc.gui.screen() != null) return;
         if (mc.player.containerMenu.containerId != 0) return;
 
         for (Item item : items.get()) {

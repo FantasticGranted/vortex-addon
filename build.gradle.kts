@@ -69,34 +69,14 @@ dependencies {
     // Meteor
     implementation(libs.meteor.client)
 
-    // Super Printer (litematica + malilib for 26.1.2, already Mojang-mapped)
-    implementation(files("libs/litematica-fabric-26.1.2-0.27.14.jar"))
-    implementation(files("libs/malilib-fabric-26.1.2-0.28.12.jar"))
-
-    // Hana printer deps
-    implementation(files("libs/tweakeroo-fabric-26.1.2-0.28.10.jar"))
-    implementation(files("libs/quickshulker-v3.2.2-mc26.1.jar"))
-    implementation(files("libs/chesttracker-2.8.3%2B26.1.2.jar"))
-    implementation(files("libs/modmenu.jar"))
-    implementation(fileTree("libs/fapi") { include("*.jar") })
-
-    // Lombok (Hana printer uses @Getter)
-    compileOnly("org.projectlombok:lombok:1.18.42")
-    annotationProcessor("org.projectlombok:lombok:1.18.42")
-
-    // Pinyin search (Hana printer)
-    implementation("com.belerweb:pinyin4j:2.5.1")
-
     // Quietee Utils
     implementation(files("libs/quiettee-utils-1.0.0+mc26.2.jar"))
 }
 
 sourceSets {
     main {
-        // The vortex addon sources are kept in a separate tree and get
-        // packaged into their own jar by the vortexJar task.
-        java.srcDirs("src/main/java", "src/vortex/java", "src/hana/java")
-        resources.srcDirs("src/main/resources", "src/vortex/resources", "src/hana/resources")
+        java.srcDirs("src/main/java", "src/vortex/java")
+        resources.srcDirs("src/main/resources", "src/vortex/resources")
     }
 }
 
@@ -156,11 +136,6 @@ tasks {
         from(zipTree("libs/quiettee-utils-1.0.0+mc26.2.jar")) {
             exclude("fabric.mod.json")
         }
-        from({
-            configurations.runtimeClasspath.get()
-                .filter { it.name.contains("pinyin4j") }
-                .map { zipTree(it) }
-        })
 
         from("LICENSE") {
             rename { "${it}_${inputs.properties["archivesName"]}" }
@@ -198,48 +173,9 @@ tasks {
         }
     }
 
-    // SuperPrinter jar
-    register<Jar>("superprinterJar") {
-        group = "build"
-        archiveBaseName.set("superprinter")
-        archiveVersion.set(project.version.toString())
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        from(sourceSets.main.get().output) {
-            include("net/numericly/superprinter/**")
-        }
-        from("src/main/resources") {
-            include("fabric.mod.json.superprinter")
-            rename { "fabric.mod.json" }
-            include("printer.accesswidener")
-        }
-        from("LICENSE") {
-            rename { "${it}_superprinter" }
-        }
-    }
-
-    // Hana Printer jar
-    register<Jar>("hanaJar") {
-        group = "build"
-        archiveBaseName.set("hana-printer")
-        archiveVersion.set(project.version.toString())
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        from(sourceSets.main.get().output) {
-            include("me/aleksilassila/litematica/**")
-        }
-        from("src/hana/resources") {
-            include("fabric.mod.json.hana")
-            rename { "fabric.mod.json" }
-            include("printer.accesswidener")
-            include("assets/hana-printer/**")
-        }
-        from("LICENSE") {
-            rename { "${it}_hana-printer" }
-        }
-    }
-
     withType<JavaCompile>().configureEach {
+        exclude("**/net/numericly/**")
+
         options.compilerArgs.addAll(
             listOf(
                 "-Xlint:deprecation",
@@ -249,7 +185,7 @@ tasks {
     }
 
     register<Copy>("deploy") {
-        dependsOn("build", "volytraflyJar", "superprinterJar", "hanaJar")
+        dependsOn("build", "volytraflyJar")
 
         doFirst {
             if (!deployModsDir.isDirectory) {
