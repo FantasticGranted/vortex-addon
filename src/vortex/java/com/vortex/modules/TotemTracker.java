@@ -190,7 +190,7 @@ public class TotemTracker extends Module {
 
     @EventHandler
     private void onRender2D(Render2DEvent event) {
-        if (!nametags.get() || mc.level == null || mc.options.hideGui) return;
+        if (!nametags.get() || mc.level == null || mc.gui.hud.isHidden()) return;
 
         TextRenderer text = TextRenderer.get();
         if (text.isBuilding()) return;
@@ -209,7 +209,7 @@ public class TotemTracker extends Module {
             if (!NametagUtils.to2D(pos, scale)) continue;
 
             if (!begun) {
-                text.begin(scale);
+                text.begin(event.graphics, scale);
                 begun = true;
             }
 

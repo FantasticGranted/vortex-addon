@@ -19,6 +19,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
@@ -375,7 +376,7 @@ public final class Utils {
         double minDistance = Double.MAX_VALUE;
         Direction bestSide = Direction.UP;
         for (Direction side : Direction.values()) {
-            double neighbourDistance = mc.player.getEyePosition().distanceTo(blockPos.offset(side.getUnitVec3i()).getCenter());
+            double neighbourDistance = mc.player.getEyePosition().distanceTo(Vec3.atCenterOf(blockPos.offset(side.getUnitVec3i())));
             if (neighbourDistance < minDistance) {
                 minDistance = neighbourDistance;
                 bestSide = side;

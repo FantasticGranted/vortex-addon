@@ -5,7 +5,6 @@ import com.mojang.logging.LogUtils;
 import com.quiettee.utils.QuietteeUtils;
 import com.vortex.commands.ChestSearchCommand;
 import com.vortex.commands.RegearCommand;
-import com.vortex.commands.StashFinderCommand;
 import com.vortex.modules.Aura;
 import com.vortex.modules.AutoRegear;
 import com.vortex.modules.CAura;
@@ -34,7 +33,6 @@ import meteordevelopment.meteorclient.addons.MeteorAddon;
 import meteordevelopment.meteorclient.commands.Commands;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
-import net.numericly.superprinter.SuperPrinter;
 import org.slf4j.Logger;
 
 public class Vortex extends MeteorAddon {
@@ -42,7 +40,6 @@ public class Vortex extends MeteorAddon {
     public static final Category CATEGORY = new Category("Vortex");
 
     private final QuietteeUtils quietteeUtils = new QuietteeUtils();
-    private final SuperPrinter superPrinter = new SuperPrinter();
     private final VolytraFlyAddon volytraFlyAddon = new VolytraFlyAddon();
     private final QuinnAddon quinnAddon = new QuinnAddon();
 
@@ -52,7 +49,7 @@ public class Vortex extends MeteorAddon {
 
         // Bundled addons are not fabric entrypoints anymore, so register their
         // orbit lambda factories ourselves (Meteor does this per entrypoint addon)
-        for (String pkg : new String[]{"com.quiettee.utils", "net.numericly.superprinter", "com.volytrafly", "com.example.addon"}) {
+        for (String pkg : new String[]{"com.quiettee.utils", "com.volytrafly", "com.example.addon"}) {
             MeteorClient.EVENT_BUS.registerLambdaFactory(pkg, (method, clazz) ->
                 (java.lang.invoke.MethodHandles.Lookup) method.invoke(null, clazz, java.lang.invoke.MethodHandles.lookup()));
         }
@@ -85,11 +82,9 @@ public class Vortex extends MeteorAddon {
 
         Commands.add(new RegearCommand());
         Commands.add(new ChestSearchCommand());
-        Commands.add(new StashFinderCommand());
 
         // Delegated bundled addons (single meteor entrypoint)
         quietteeUtils.onInitialize();
-        superPrinter.onInitialize();
         volytraFlyAddon.onInitialize();
         quinnAddon.onInitialize();
     }
@@ -98,7 +93,6 @@ public class Vortex extends MeteorAddon {
     public void onRegisterCategories() {
         Modules.registerCategory(CATEGORY);
         quietteeUtils.onRegisterCategories();
-        superPrinter.onRegisterCategories();
         volytraFlyAddon.onRegisterCategories();
         quinnAddon.onRegisterCategories();
     }

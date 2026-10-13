@@ -45,7 +45,7 @@ public class KeyPearl extends Module {
             return;
         }
 
-        if (mc.screen != null) return;
+        if (mc.gui.screen() != null) return;
 
         if (mc.player.getOffhandItem().is(Items.ENDER_PEARL)) {
             mc.gameMode.useItem(mc.player, InteractionHand.OFF_HAND);

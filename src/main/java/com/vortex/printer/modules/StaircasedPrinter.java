@@ -618,8 +618,8 @@ public class StaircasedPrinter extends Module implements MapPrinter {
                 mc.player.getInventory().setSelectedSlot(availableHotBarSlots.get(0));
 
                 BlockPos centerBlockPos = mapCorner.offset(map.length / 2 - 1, map[map.length / 2 - 1][map[0].length / 2 - 1].getRight(), map[0].length / 2 - 1);
-                Vec3 center = centerBlockPos.getCenter().add(0, 0.5, 0);
-                Vec3 centerEdge = mapCorner.offset(map.length / 2 - 1, 0, -1).getCenter().add(0, 0.5, 0);
+                Vec3 center = Vec3.atCenterOf(centerBlockPos).add(0, 0.5, 0);
+                Vec3 centerEdge = Vec3.atCenterOf(mapCorner.offset(map.length / 2 - 1, 0, -1)).add(0, 0.5, 0);
                 checkpoints.add(new Pair<>(centerEdge, new Pair<>("walkRestock", null)));
                 checkpoints.add(new Pair<>(center, new Pair<>("fillMap", null)));
                 checkpoints.add(new Pair<>(centerEdge, new Pair<>("walkRestock", null)));
@@ -880,7 +880,7 @@ public class StaircasedPrinter extends Module implements MapPrinter {
         }
 
         if (closeNextInvPacket) {
-            if (mc.screen != null) {
+            if (mc.gui.screen() != null) {
                 mc.player.closeContainer();
             }
             closeNextInvPacket = false;
@@ -1025,11 +1025,11 @@ public class StaircasedPrinter extends Module implements MapPrinter {
         if (miningPos != null || nextBlockPos == null) return;
 
         if (state.equals(State.Walking)) {
-            if (PlayerUtils.distanceTo(nextBlockPos.getCenter()) <= interactionRange.get()) {
+            if (PlayerUtils.distanceTo(Vec3.atCenterOf(nextBlockPos)) <= interactionRange.get()) {
                 tryPlacingBlock(nextBlockPos);
             }
         } else {
-            Vec3 centerPos = nextBlockPos.getCenter();
+            Vec3 centerPos = Vec3.atCenterOf(nextBlockPos);
             if (centerPos.z() - mc.player.getZ() > 0.5) {
                 miningPos = nextBlockPos;
                 mc.player.setXRot((float) Rotations.getPitch(miningPos));
@@ -1197,10 +1197,10 @@ public class StaircasedPrinter extends Module implements MapPrinter {
     private void interactWithBlock(BlockPos chestPos) {
         Utils.setForwardPressed(false);
         mc.player.setDeltaMovement(0, 0, 0);
-        mc.player.setYRot((float) Rotations.getYaw(chestPos.getCenter()));
-        mc.player.setXRot((float) Rotations.getPitch(chestPos.getCenter()));
+        mc.player.setYRot((float) Rotations.getYaw(Vec3.atCenterOf(chestPos)));
+        mc.player.setXRot((float) Rotations.getPitch(Vec3.atCenterOf(chestPos)));
 
-        BlockHitResult hitResult = new BlockHitResult(chestPos.getCenter(), Utils.getInteractionSide(chestPos), chestPos, false);
+        BlockHitResult hitResult = new BlockHitResult(Vec3.atCenterOf(chestPos), Utils.getInteractionSide(chestPos), chestPos, false);
         BlockUtils.interact(hitResult, InteractionHand.MAIN_HAND, true);
         interactTimeout = retryInteractTimer.get();
         lastInteractedChest = chestPos;
@@ -1233,7 +1233,7 @@ public class StaircasedPrinter extends Module implements MapPrinter {
         if (material.equals(lastSwappedMaterial)) return;
         info("No " + new ItemStack(material).getHoverName().getString() + " found in inventory. Resetting...");
         mc.player.setDeltaMovement(0, 0, 0);
-        Vec3 pathCheckpoint = new Vec3(mc.player.getX(), mapCorner.getCenter().y, mapCorner.north().getCenter().z);
+        Vec3 pathCheckpoint = new Vec3(mc.player.getX(), Vec3.atCenterOf(mapCorner).y, Vec3.atCenterOf(mapCorner.north()).z);
         checkpoints.add(0, new Pair<>(mc.player.position(), new Pair<>("walkRestock", null)));
         checkpoints.add(0, new Pair<>(pathCheckpoint, new Pair<>("walkRestock", null)));
         checkpoints.add(0, new Pair<>(dumpStation.getLeft(), new Pair<>("dump", null)));
@@ -1271,8 +1271,8 @@ public class StaircasedPrinter extends Module implements MapPrinter {
                 }
             }
             if (lineFinished) continue;
-            Vec3 cp1 = mapCorner.getCenter().add(x, 0.5, -1);
-            Vec3 cp2 = mapCorner.getCenter().add(x, map[x][map[0].length - 2].getRight() + 0.5, map[0].length - 2);
+            Vec3 cp1 = Vec3.atCenterOf(mapCorner).add(x, 0.5, -1);
+            Vec3 cp2 = Vec3.atCenterOf(mapCorner).add(x, map[x][map[0].length - 2].getRight() + 0.5, map[0].length - 2);
             checkpoints.add(new Pair<>(cp1, new Pair<>("", null)));
             checkpoints.add(new Pair<>(cp2, new Pair<>("", null)));
             checkpoints.add(new Pair<>(cp1, new Pair<>("lineEnd", null)));
@@ -1286,10 +1286,10 @@ public class StaircasedPrinter extends Module implements MapPrinter {
     private void calculateMiningPath() {
         if (minedLines >= map.length) return;
         checkpoints.clear();
-        Vec3 cp1 = mapCorner.getCenter().add(minedLines, 0.5, -mineLineEndOffset.get());
-        Vec3 cp2 = mapCorner.getCenter().add(minedLines, map[minedLines][0].getRight() + 0.5, -1);
+        Vec3 cp1 = Vec3.atCenterOf(mapCorner).add(minedLines, 0.5, -mineLineEndOffset.get());
+        Vec3 cp2 = Vec3.atCenterOf(mapCorner).add(minedLines, map[minedLines][0].getRight() + 0.5, -1);
         for (int i = 0; i < map[minedLines].length - 1; i++) {
-            cp2 = mapCorner.getCenter().add(minedLines, map[minedLines][i].getRight() + 0.5, i);
+            cp2 = Vec3.atCenterOf(mapCorner).add(minedLines, map[minedLines][i].getRight() + 0.5, i);
             if (i + 2 >= map[minedLines].length) break;
             BlockPos airPos = mapCorner.offset(minedLines, map[minedLines][i + 2].getRight(), i + 2);
             if (MapAreaCache.getCachedBlockState(airPos).isAir()) break;

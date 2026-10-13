@@ -532,8 +532,8 @@ public class FullBlockPrinter extends Module {
                 }
             }
             if (lineFinished) continue;
-            Vec3 cp1 = mapCorner.getCenter().add(x + linesPerRun.get() - 1, 0, -1);
-            Vec3 cp2 = mapCorner.getCenter().add(x + linesPerRun.get() - 1, 0, 128);
+            Vec3 cp1 = Vec3.atCenterOf(mapCorner).add(x + linesPerRun.get() - 1, 0, -1);
+            Vec3 cp2 = Vec3.atCenterOf(mapCorner).add(x + linesPerRun.get() - 1, 0, 128);
             if (isStartSide) {
                 checkpoints.add(new Pair(cp1, new Pair("nextLine", null)));
                 checkpoints.add(new Pair(cp2, new Pair("lineEnd", null)));
@@ -792,7 +792,7 @@ public class FullBlockPrinter extends Module {
                 Utils.getOneItem(paneSlot, true, availableSlots, availableHotBarSlots, packet);
                 mc.player.getInventory().setSelectedSlot(availableHotBarSlots.get(0));
 
-                Vec3 center = mapCorner.offset(map.length / 2 - 1, 0, map[0].length / 2 - 1).getCenter();
+                Vec3 center = Vec3.atCenterOf(mapCorner.offset(map.length / 2 - 1, 0, map[0].length / 2 - 1));
                 checkpoints.add(new Pair(center, new Pair("fillMap", null)));
                 state = State.Walking;
                 break;
@@ -883,12 +883,12 @@ public class FullBlockPrinter extends Module {
 
     private void endTNTAvoid() {
         if (nextResetNorth) {
-            Vec3 southCP = mapCorner.offset(-1, 1, map[0].length).getCenter();
+            Vec3 southCP = Vec3.atCenterOf(mapCorner.offset(-1, 1, map[0].length));
             checkpoints.add(new Pair<>(southCP, new Pair<>("sprint", null)));
-            Vec3 northCP = mapCorner.offset(-1, 1, -1).getCenter();
+            Vec3 northCP = Vec3.atCenterOf(mapCorner.offset(-1, 1, -1));
             checkpoints.add(new Pair<>(northCP, new Pair<>("finishedAvoid", null)));
         } else {
-            Vec3 centerCP = mapCorner.offset(map.length / 2, 1, -1).getCenter();
+            Vec3 centerCP = Vec3.atCenterOf(mapCorner.offset(map.length / 2, 1, -1));
             checkpoints.add(new Pair<>(centerCP, new Pair<>("finishedAvoid", null)));
         }
         nextResetNorth = !nextResetNorth;
@@ -981,7 +981,7 @@ public class FullBlockPrinter extends Module {
             }
             int offset = tntDistance.get();
             if (!nextResetNorth) offset *= -1;
-            Vec3 targetPos = mapCorner.offset(map.length / 2, 1, getFirstIntactRow() + offset).getCenter();
+            Vec3 targetPos = Vec3.atCenterOf(mapCorner.offset(map.length / 2, 1, getFirstIntactRow() + offset));
             targetPos.add(0, mc.player.getY() - targetPos.y, 0);
             if (PlayerUtils.distanceTo(targetPos) > 0.9) {
                 checkpoints.add(0, new Pair<>(targetPos, new Pair<>("switchAvoidTNT", null)));
@@ -1011,7 +1011,7 @@ public class FullBlockPrinter extends Module {
         }
 
         if (closeNextInvPacket) {
-            if (mc.screen != null) {
+            if (mc.gui.screen() != null) {
                 mc.player.clientSideCloseContainer();
             }
             closeNextInvPacket = false;
@@ -1034,7 +1034,7 @@ public class FullBlockPrinter extends Module {
             switch (checkpointAction.getLeft()) {
                 case "lineEnd":
                     arePlacementsCorrect();
-                    boolean atCornerSide = goal.z == mapCorner.north().getCenter().z;
+                    boolean atCornerSide = goal.z == Vec3.atCenterOf(mapCorner.north()).z;
                     calculateBuildingPath(atCornerSide, false);
                     break;
                 case "mapMaterialChest":
@@ -1131,7 +1131,7 @@ public class FullBlockPrinter extends Module {
             final Vec3 currentGoal = goal;
             BlockPos playerGroundPos = mc.player.blockPosition().offset(0, mapCorner.getY() - mc.player.getBlockY(), 0);
             Utils.iterateBlocks(playerGroundPos, (int) Math.ceil(placeRange.get()) + 1, 0, ((blockPos, blockState) -> {
-                Double posDistance = PlayerUtils.distanceTo(blockPos.getCenter());
+                Double posDistance = PlayerUtils.distanceTo(Vec3.atCenterOf(blockPos));
                 if ((blockState.isAir()) && posDistance <= placeRange.get() && MapAreaCache.isWithinMap(blockPos)
                     && blockPos.getX() <= currentGoal.x() && !placements.contains(blockPos)) {
                     if (closestPos.get() == null) {
@@ -1196,7 +1196,7 @@ public class FullBlockPrinter extends Module {
         if (lastSwappedMaterial == material) return false;      //Wait for swapped material
         info("No " + new ItemStack(material).getHoverName().getString() + " found in Container. Resetting...");
         Vec3 pathCheckpoint1 = mc.player.position().relative(Direction.WEST, linesPerRun.get());
-        Vec3 pathCheckpoint2 = new Vec3(pathCheckpoint1.x(), pathCheckpoint1.y, mapCorner.north().getCenter().z());
+        Vec3 pathCheckpoint2 = new Vec3(pathCheckpoint1.x(), pathCheckpoint1.y, Vec3.atCenterOf(mapCorner.north()).z());
         checkpoints.add(0, new Pair(mc.player.position(), new Pair("walkRestock", null)));
         checkpoints.add(0, new Pair(pathCheckpoint1, new Pair("walkRestock", null)));
         checkpoints.add(0, new Pair(pathCheckpoint2, new Pair("walkRestock", null)));
@@ -1254,10 +1254,10 @@ public class FullBlockPrinter extends Module {
     private void interactWithBlock(BlockPos chestPos) {
         Utils.setForwardPressed(false);
         mc.player.setDeltaMovement(0, 0, 0);
-        mc.player.setYRot((float) Rotations.getYaw(chestPos.getCenter()));
-        mc.player.setXRot((float) Rotations.getPitch(chestPos.getCenter()));
+        mc.player.setYRot((float) Rotations.getYaw(Vec3.atCenterOf(chestPos)));
+        mc.player.setXRot((float) Rotations.getPitch(Vec3.atCenterOf(chestPos)));
 
-        BlockHitResult hitResult = new BlockHitResult(chestPos.getCenter(), Utils.getInteractionSide(chestPos), chestPos, false);
+        BlockHitResult hitResult = new BlockHitResult(Vec3.atCenterOf(chestPos), Utils.getInteractionSide(chestPos), chestPos, false);
         BlockUtils.interact(hitResult, InteractionHand.MAIN_HAND, true);
         //Set timeout for chest interaction
         interactTimeout = retryInteractTimer.get();
@@ -1267,8 +1267,8 @@ public class FullBlockPrinter extends Module {
     private void interactWithBlock(BlockHitResult hitResult) {
         Utils.setForwardPressed(false);
         mc.player.setDeltaMovement(0, 0, 0);
-        mc.player.setYRot((float) Rotations.getYaw(hitResult.getBlockPos().getCenter()));
-        mc.player.setXRot((float) Rotations.getPitch(hitResult.getBlockPos().getCenter()));
+        mc.player.setYRot((float) Rotations.getYaw(Vec3.atCenterOf(hitResult.getBlockPos())));
+        mc.player.setXRot((float) Rotations.getPitch(Vec3.atCenterOf(hitResult.getBlockPos())));
         BlockUtils.interact(hitResult, InteractionHand.MAIN_HAND, true);
         interactTimeout = retryInteractTimer.get();
     }

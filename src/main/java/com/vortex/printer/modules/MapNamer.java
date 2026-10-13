@@ -170,7 +170,7 @@ public class MapNamer extends Module {
             if (mc.player.experienceLevel < 1) {
                 info("Not enough XP.");
                 state = State.AwaitInteract;
-                if (mc.screen != null) mc.player.closeContainer();
+                if (mc.gui.screen() != null) mc.player.closeContainer();
                 return;
             }
             int slot = mapSlots.remove(0);
@@ -195,7 +195,7 @@ public class MapNamer extends Module {
                     } else {
                         info("More maps found than with endX and endY described.");
                     }
-                    if (mc.screen != null) mc.player.closeContainer();
+                    if (mc.gui.screen() != null) mc.player.closeContainer();
                     toggle();
                     return;
                 }
@@ -207,7 +207,7 @@ public class MapNamer extends Module {
                 state = State.AwaitInteract;
                 info("All maps in inventory named. Progress (x: " + currentX + ", y: " + currentY + ") saved. " +
                     "Interact with an anvil with the next batch in the inventory.");
-                if (mc.screen != null) mc.player.closeContainer();
+                if (mc.gui.screen() != null) mc.player.closeContainer();
             } else {
                 ticks = renameDelay.get();
             }
