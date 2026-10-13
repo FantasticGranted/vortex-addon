@@ -17,10 +17,13 @@ import meteordevelopment.meteorclient.utils.render.NametagUtils;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.network.protocol.game.ClientboundDamageEventPacket;
 import net.minecraft.network.protocol.game.ClientboundEntityEventPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
+import net.minecraft.network.protocol.game.ServerboundAttackPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import org.joml.Vector3d;
@@ -118,7 +121,7 @@ public class TotemTracker extends Module {
 
     @EventHandler
     private void onPacketReceive(PacketEvent.Receive event) {
-        if (mc.level == null) return;
+        if (mc.level == null || mc.player == null) return;
 
         if (event.packet instanceof ClientboundEntityEventPacket packet && packet.getEventId() == TOTEM_EVENT) {
             Entity entity = packet.getEntity(mc.level);
@@ -127,6 +130,14 @@ public class TotemTracker extends Module {
             }
         } else if (event.packet instanceof ClientboundPlayerCombatKillPacket packet) {
             onPlayerDeath(packet.playerId());
+        } else if (event.packet instanceof ClientboundDamageEventPacket packet) {
+            int me = mc.player.getId();
+            if (packet.sourceCauseId() == me || packet.sourceDirectId() == me) {
+                Entity victim = mc.level.getEntity(packet.entityId());
+                if (victim instanceof Player player && player != mc.player) {
+                    lastMelee.put(player.getUUID(), System.currentTimeMillis());
+                }
+            }
         }
     }
 
@@ -180,6 +191,13 @@ public class TotemTracker extends Module {
     private void onSendPacket(PacketEvent.Send event) {
         if (event.packet instanceof ServerboundUseItemOnPacket && holdingCrystal()) {
             lastCrystalPlace = System.currentTimeMillis();
+        } else if (event.packet instanceof ServerboundAttackPacket packet && mc.level != null) {
+            Entity target = mc.level.getEntity(packet.entityId());
+            if (target instanceof Player player && player != mc.player) {
+                lastMelee.put(player.getUUID(), System.currentTimeMillis());
+            } else if (target instanceof EndCrystal) {
+                lastCrystalPlace = System.currentTimeMillis();
+            }
         }
     }
 
