@@ -231,8 +231,19 @@ tasks {
         from("src/hana/resources") {
             include("fabric.mod.json.hana")
             rename { "fabric.mod.json" }
+            expand(
+                mapOf(
+                    "version" to project.version.toString(),
+                    "minecraft_version" to toMinecraftCompat(libs.versions.minecraft.get()),
+                    "jdk_version" to libs.versions.jdk.get(),
+                )
+            )
+        }
+        from("src/hana/resources") {
+            include("assets/litematica-printer/**")
+        }
+        from("src/main/resources") {
             include("printer.accesswidener")
-            include("assets/hana-printer/**")
         }
         from("LICENSE") {
             rename { "${it}_hana-printer" }

@@ -22,6 +22,7 @@ import me.aleksilassila.litematica.printer.printer.action.Action;
 import me.aleksilassila.litematica.printer.runtime.PrinterRuntime;
 import me.aleksilassila.litematica.printer.utils.*;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -84,7 +85,11 @@ public class PrintHandler extends FeatureModuleBase {
     }
 
     public boolean isPlacementBusy() {
-        if (this.printTasks.hasActiveWorkflow() || this.actionBroker.isWaitingForLook()) {
+        if (this.printTasks.hasActiveWorkflow()
+                || this.actionBroker.isWaitingForLook()
+                || this.actionBroker.hasQueuedAction()
+                || this.runtime.inventorySwitchGuard().isWaiting()
+                || !this.runtime.inventorySwitchGuard().isSelectedSlotSettled()) {
             return true;
         }
         long lastSent = this.placementRateController.lastSentTick();
@@ -245,6 +250,13 @@ public class PrintHandler extends FeatureModuleBase {
             return false;
         }
         this.ctx = new SchematicBlockContext(client, level, schematic, blockPos);
+        Item preferred = this.sortedTargets.getPreferredItem();
+        if (preferred != null) {
+            Item required = this.ctx.requiredState.getBlock().asItem();
+            if (required != null && required != preferred) {
+                return false;
+            }
+        }
         boolean inPrintSelection = ConfigUtils.isPositionInSelectionRange(
                 this.player, blockPos, Configs.Print.PRINT_SELECTION_TYPE);
         if (!inPrintSelection) {
@@ -329,6 +341,9 @@ public class PrintHandler extends FeatureModuleBase {
 
     @Override
     protected void executeIteration(BlockPos blockPos, AtomicReference<Boolean> skipIteration) {
+        if (this.ctx != null && this.ctx.requiredState != null) {
+            this.sortedTargets.setPreferredItem(this.ctx.requiredState.getBlock().asItem());
+        }
         PrintTaskAction taskAction = this.printTaskAction;
         PrintPlacementResult result = this.placementExecutor.execute(this.ctx, this.action, taskAction);
         if (taskAction == null && result.taskEvent() == PrintPlacementResult.TaskEvent.SUCCESS) {
