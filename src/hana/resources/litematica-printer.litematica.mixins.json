@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "me.aleksilassila.litematica.printer.mixin",
-  "compatibilityLevel": "JAVA_25",
+  "compatibilityLevel": "${compatibility_level}",
   "mixins": [
     "printer.litematica.EasyPlaceUtilsAccessor",
     "printer.litematica.InventoryUtilsAccessor",
@@ -11,7 +11,6 @@
     "printer.litematica.MixinChunkRenderDispatcherSchematic"
   ],
   "client": [
-    "printer.litematica.gui.MixinGuiMaterialList",
     "printer.litematica.gui.MixinLitematicaGuiMainMenu"
   ],
   "injectors": {

@@ -2,7 +2,7 @@
   "required": false,
   "minVersion": "0.8",
   "package": "me.aleksilassila.litematica.printer.mixin",
-  "compatibilityLevel": "JAVA_25",
+  "compatibilityLevel": "${compatibility_level}",
   "client": [
     "printer.tweakeroo.MixinInputHandler"
   ],

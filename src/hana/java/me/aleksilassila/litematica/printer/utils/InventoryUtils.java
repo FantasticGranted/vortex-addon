@@ -26,6 +26,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Predicate;
 
 import me.aleksilassila.litematica.printer.runtime.RuntimeAccess;
@@ -105,8 +106,15 @@ public class InventoryUtils {
     }
 
     public static void setHotbarSlot(int slot, Inventory inventory) {
+        int previous = getSelectedSlot(inventory);
         setSelectedSlot(inventory, slot);
         syncSelectedHotbarSlot();
+        if (previous != slot && client.player != null) {
+            ItemStack hand = client.player.getMainHandItem();
+            if (!hand.isEmpty()) {
+                RuntimeAccess.get().inventorySwitchGuard().markSwitchIfNeeded(hand);
+            }
+        }
     }
 
     public static void syncSelectedHotbarSlot() {
@@ -115,7 +123,9 @@ public class InventoryUtils {
         if (player == null || connection == null) {
             return;
         }
-        connection.send(new ServerboundSetCarriedItemPacket(getSelectedSlot(player.getInventory())));
+        int slot = getSelectedSlot(player.getInventory());
+        connection.send(new ServerboundSetCarriedItemPacket(slot));
+        RuntimeAccess.get().inventorySwitchGuard().noteSyncedSlot(slot);
     }
 
     public static PickResult checkPickSlotAvailable(int sourceSlot, Minecraft mc) {
@@ -144,7 +154,11 @@ public class InventoryUtils {
         }
         Inventory inventory = player.getInventory();
         if (Inventory.isHotbarSlot(sourceSlot)) {
+            int previousSlot = getSelectedSlot(inventory);
             setHotbarSlot(sourceSlot, inventory);
+            if (previousSlot != sourceSlot && stack != null && !stack.isEmpty()) {
+                RuntimeAccess.get().inventorySwitchGuard().markSwitchIfNeeded(stack);
+            }
             return true;
         }
         if (InventoryUtilsAccessor.getPICK_BLOCKABLE_SLOTS().isEmpty()) {
@@ -153,6 +167,9 @@ public class InventoryUtils {
         }
         int hotbarSlot = sourceSlot;
         if (sourceSlot == -1 || !Inventory.isHotbarSlot(sourceSlot)) {
+            hotbarSlot = selectBestPickBlockableHotbarSlot(inventory, stack);
+        }
+        if (hotbarSlot == -1) {
             hotbarSlot = InventoryUtilsAccessor.getEmptyPickBlockableHotbarSlot(inventory);
         }
         if (hotbarSlot == -1) {
@@ -163,14 +180,50 @@ public class InventoryUtils {
             if (EntityUtils.isCreativeMode(player)) {
                 getMainStacks(inventory).set(hotbarSlot, stack.copy());
                 client.gameMode.handleCreativeModeItemAdd(client.player.getMainHandItem(), 36 + hotbarSlot);
+                if (stack != null && !stack.isEmpty()) {
+                    RuntimeAccess.get().inventorySwitchGuard().markSwitchIfNeeded(stack);
+                }
                 return true;
             }
             EasyPlaceUtilsAccessor.callSetEasyPlaceLastPickBlockTime();
-            return swapItemToMainHand(stack.copy(), mc);
+            boolean swapped = swapItemToMainHand(stack.copy(), mc);
+            if (swapped) {
+                syncSelectedHotbarSlot();
+                if (stack != null && !stack.isEmpty()) {
+                    RuntimeAccess.get().inventorySwitchGuard().markSwitchIfNeeded(stack);
+                }
+            }
+            return swapped;
         } else {
             showMessageWithCooldown(Message.MessageType.WARNING, "litematica.message.warn.pickblock.no_suitable_slot_found");
             return false;
         }
+    }
+
+    private static int selectBestPickBlockableHotbarSlot(Inventory inventory, ItemStack wanted) {
+        List<Integer> configured = InventoryUtilsAccessor.getPICK_BLOCKABLE_SLOTS();
+        if (configured == null || configured.isEmpty()) {
+            return -1;
+        }
+        int sameItemSlot = -1;
+        for (int slot : configured) {
+            if (slot < 0 || slot > 8) {
+                continue;
+            }
+            if (!InventoryUtilsAccessor.canPickToSlot(inventory, slot)) {
+                continue;
+            }
+            ItemStack existing = inventory.getItem(slot);
+            if (existing.isEmpty()) {
+                return slot;
+            }
+            if (wanted != null && !wanted.isEmpty()
+                    && ItemStack.isSameItemSameComponents(existing, wanted)
+                    && sameItemSlot < 0) {
+                sameItemSlot = slot;
+            }
+        }
+        return sameItemSlot;
     }
 
     public static boolean swapItemToMainHand(ItemStack stackReference, Minecraft mc) {

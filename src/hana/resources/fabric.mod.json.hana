@@ -8,11 +8,17 @@
   "contact": {
     "sources": "https://github.com/FantasticGranted/vortex-addon"
   },
-  "icon": "assets/hana-printer/icon.png",
+  "icon": "assets/litematica-printer/icon.png",
   "environment": "client",
   "entrypoints": {
-    "meteor": [
+    "main": [
       "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+    ],
+    "client": [
+      "me.aleksilassila.litematica.printer.LitematicaPrinterMod"
+    ],
+    "modmenu": [
+      "me.aleksilassila.litematica.printer.config.ModMenu"
     ]
   },
   "accessWidener": "printer.accesswidener",

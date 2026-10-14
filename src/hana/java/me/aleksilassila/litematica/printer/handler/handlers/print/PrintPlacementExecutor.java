@@ -51,6 +51,8 @@ public final class PrintPlacementExecutor {
     private static final Item[] EMPTY_HAND_ITEMS = {Items.AIR};
     private static final long RESERVE_NOTICE_COOLDOWN_TICKS = 100L;
     private long lastReserveNoticeTick = Long.MIN_VALUE;
+    private long lastPlacedItemTick = Long.MIN_VALUE;
+    private Item lastPlacedItem;
 
     public PrintPlacementExecutor(
             ActionPort actionBroker,
@@ -126,9 +128,15 @@ public final class PrintPlacementExecutor {
                     );
         }
         if (!itemReady) {
-            boolean retrievalPending =
-                    this.inventorySwitchGuard.isWaiting()
-                            || this.actionBroker.isResourceHeld(ResourceLease.INVENTORY);
+            boolean switchPending = this.inventorySwitchGuard.isWaiting();
+            boolean inventoryLease = this.actionBroker.isResourceHeld(ResourceLease.INVENTORY);
+            boolean retrievalPending = switchPending || inventoryLease;
+            boolean manualRefill = Configs.Special.MANUAL_VANILLA_REFILL.getBooleanValue();
+            if (switchPending && !inventoryLease && !this.materialRequests.isBusy()
+                    && !RuntimeAccess.get().manualVanillaRefill().isBusy()) {
+                this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.WAITING_ITEM_SYNC);
+                return PrintPlacementResult.deferred(true);
+            }
             ItemStack reserveBlockedStack = reserveItems
                     ? InventoryUtils.findReserveBlockedStack(
                             context.client.player,
@@ -137,8 +145,21 @@ public final class PrintPlacementExecutor {
                             reserveCount
                     )
                     : ItemStack.EMPTY;
+            if (manualRefill) {
+                requestManualMaterialRefill(requiredItems, requiredStackPredicate, action.getRequiredCreativeStack());
+                if (RuntimeAccess.get().manualVanillaRefill().isBusy()
+                        || this.materialRequests.isBusy()) {
+                    this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.WAITING_RETRIEVAL);
+                    return PrintPlacementResult.deferred(true);
+                }
+            }
+            if (manualRefill && !reserveBlockedStack.isEmpty()) {
+                this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.WAITING_RETRIEVAL);
+                return PrintPlacementResult.deferred(true);
+            }
             if (retrievalPending) {
-                if (!this.materialRequests.isBusy()) {
+                if (!this.materialRequests.isBusy()
+                        && !RuntimeAccess.get().manualVanillaRefill().isBusy()) {
                     this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.MISSING_MATERIAL);
                     this.missingMaterials.recordMissing(
                             requiredItems,
@@ -149,14 +170,18 @@ public final class PrintPlacementExecutor {
                     return PrintPlacementResult.failure(false, shouldStopAfterTaskAction(taskAction));
                 }
                 this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.WAITING_RETRIEVAL);
-
                 this.missingMaterials.recordMissing(
                         requiredItems,
                         requiredStackPredicate,
                         action.getRequiredCreativeStack(),
                         context.level.getGameTime()
                 );
-            } else if (reserveBlockedStack.isEmpty()) {
+                return PrintPlacementResult.materialUnavailable(
+                        this.materialRequests.blocksPrinterWhilePending()
+                                || RuntimeAccess.get().manualVanillaRefill().shouldPause()
+                );
+            }
+            if (reserveBlockedStack.isEmpty()) {
                 this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.MISSING_MATERIAL);
                 this.missingMaterials.recordMissing(
                         requiredItems,
@@ -168,17 +193,36 @@ public final class PrintPlacementExecutor {
                 this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.RESERVE_LIMIT);
                 showReserveNotice(context, reserveBlockedStack);
             }
-            if (retrievalPending) {
-
-                return PrintPlacementResult.materialUnavailable(this.materialRequests.blocksPrinterWhilePending());
-            }
-
             return PrintPlacementResult.materialUnavailable(false);
         }
         this.missingMaterials.resolve(requiredItems, requiredStackPredicate);
-        if (!InventoryUtils.isHoldingAnyItem(context.client.player, requiredItems)
+        if (this.inventorySwitchGuard.isWaiting()
+                || CarriedItemUtils.hasCarriedItem(context.client.player)
+                || !InventoryUtils.isHoldingAnyItem(context.client.player, requiredItems)
                 || requiredStackPredicate != null
                 && !requiredStackPredicate.test(context.client.player.getMainHandItem())) {
+            this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.WAITING_ITEM_SYNC);
+            return PrintPlacementResult.deferred(true);
+        }
+
+        long gameTime = context.level.getGameTime();
+        if (this.lastPlacedItemTick == gameTime
+                && this.lastPlacedItem != null
+                && !isItemAllowed(this.lastPlacedItem, requiredItems, requiredStackPredicate, context.client.player.getMainHandItem())) {
+            this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.WAITING_ITEM_SYNC);
+            return PrintPlacementResult.deferred(true);
+        }
+
+        if (context.client.player != null) {
+            var motion = context.client.player.getDeltaMovement();
+            double horizSpeedSqr = motion.x * motion.x + motion.z * motion.z;
+            if (horizSpeedSqr > 0.04D) {
+                this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.WAITING_ITEM_SYNC);
+                return PrintPlacementResult.deferred(true);
+            }
+        }
+        if (InteractionUtils.getRuntime().hasActiveDestroyTarget()
+                || RuntimeAccess.get().modules().mine().hasActiveBreakingWork()) {
             this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.WAITING_ITEM_SYNC);
             return PrintPlacementResult.deferred(true);
         }
@@ -259,6 +303,14 @@ public final class PrintPlacementExecutor {
                 this.actionBroker.cancelPrintSignEdit(blockPos);
             }
             if (sendResult == ActionPort.SendResult.RESERVE_LIMIT) {
+                if (Configs.Special.MANUAL_VANILLA_REFILL.getBooleanValue()) {
+                    Item held = context.client.player.getMainHandItem().getItem();
+                    if (held != null && held != Items.AIR) {
+                        RuntimeAccess.get().manualVanillaRefill().requestItems(java.util.List.of(held));
+                    }
+                    this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, HudStatus.WAITING_RETRIEVAL);
+                    return PrintPlacementResult.deferred(true);
+                }
                 showReserveNotice(context, context.client.player.getMainHandItem());
             }
             this.hudStats.recordDeferred(HudStatsManager.Mode.PRINT, describeSendFailure(sendResult));
@@ -280,6 +332,13 @@ public final class PrintPlacementExecutor {
             Action action,
             @Nullable PrintTaskAction taskAction
     ) {
+        if (context.client.player != null) {
+            ItemStack hand = context.client.player.getMainHandItem();
+            if (!hand.isEmpty()) {
+                this.lastPlacedItem = hand.getItem();
+                this.lastPlacedItemTick = context.level.getGameTime();
+            }
+        }
         if (context.requiredState.getBlock() instanceof SignBlock) {
             this.actionBroker.confirmPrintSignEditSent(context.blockPos);
         }
@@ -345,6 +404,54 @@ public final class PrintPlacementExecutor {
 
     private static boolean shouldStopAfterTaskAction(@Nullable PrintTaskAction taskAction) {
         return taskAction != null && taskAction.stopIterationAfterAction();
+    }
+
+
+    private static boolean isItemAllowed(
+            Item item,
+            Item[] requiredItems,
+            @Nullable Predicate<ItemStack> requiredStackPredicate,
+            ItemStack heldStack
+    ) {
+        if (requiredStackPredicate != null) {
+            return !heldStack.isEmpty() && heldStack.is(item) && requiredStackPredicate.test(heldStack);
+        }
+        if (requiredItems == null || requiredItems.length == 0) {
+            return true;
+        }
+        for (Item required : requiredItems) {
+            if (required != null && required.equals(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private void requestManualMaterialRefill(
+            Item[] requiredItems,
+            @Nullable Predicate<ItemStack> requiredStackPredicate,
+            @Nullable ItemStack creativeFallback
+    ) {
+        java.util.ArrayList<Item> needed = new java.util.ArrayList<>();
+        if (requiredItems != null) {
+            for (Item item : requiredItems) {
+                if (item != null && item != Items.AIR) {
+                    needed.add(item);
+                }
+            }
+        }
+        if (needed.isEmpty() && creativeFallback != null && !creativeFallback.isEmpty()) {
+            needed.add(creativeFallback.getItem());
+        }
+        if (needed.isEmpty()) {
+            return;
+        }
+        RuntimeAccess.get().manualVanillaRefill().requestItems(needed);
+        this.materialRequests.request(
+                needed.toArray(Item[]::new),
+                me.aleksilassila.litematica.printer.integration.inventory.MaterialRequest.Source.PRINT
+        );
     }
 
     private void showReserveNotice(SchematicBlockContext context, ItemStack stack) {
