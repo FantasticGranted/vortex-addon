@@ -152,6 +152,10 @@ tasks {
         exclude("fabric.mod.json.hana")
         exclude("fabric.mod.json.superprinter")
         exclude("fabric.mod.json.volytrafly")
+        exclude("litematica-printer.core.mixins.json")
+        exclude("litematica-printer.litematica.mixins.json")
+        exclude("litematica-printer.malilib.mixins.json")
+        exclude("litematica-printer.optional.mixins.json")
 
         from(zipTree("libs/quiettee-utils-1.0.0+mc26.1.jar")) {
             exclude("fabric.mod.json")
@@ -236,6 +240,16 @@ tasks {
                     "version" to project.version.toString(),
                     "minecraft_version" to toMinecraftCompat(libs.versions.minecraft.get()),
                     "jdk_version" to libs.versions.jdk.get(),
+                )
+            )
+        }
+        from("src/hana/resources") {
+            include("litematica-printer.*.mixins.json")
+            expand(
+                mapOf(
+                    "compatibility_level" to "JAVA_25",
+                    "beacon_client_mixins" to "\"printer.mc.BeaconBlockEntityAccessor\",\n    \"printer.mc.BeaconButtonAccessor\",\n    \"printer.mc.BeaconScreenMixin\",",
+                    "chesttracker_client_mixins" to "\"printer.chesttracker.ItemListWidgetAccessor\",\n    \"printer.chesttracker.ItemListWidgetMixin\",",
                 )
             )
         }
