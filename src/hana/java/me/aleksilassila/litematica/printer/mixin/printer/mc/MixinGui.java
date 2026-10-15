@@ -82,7 +82,7 @@ public abstract class MixinGui {
     }
 
     //#if MC > 12006
-    @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "extractCrosshair", at = @At("HEAD"), cancellable = true)
     private void litematicaPrinter$hideVanillaCrosshair(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
     //#elseif MC > 11904
     //$$ @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
