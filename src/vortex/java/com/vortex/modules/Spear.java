@@ -8,6 +8,7 @@ import meteordevelopment.meteorclient.systems.friends.Friends;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -87,6 +88,23 @@ public class Spear extends Module {
         .build()
     );
 
+    private final Setting<Boolean> predict = sgTargeting.add(new BoolSetting.Builder()
+        .name("predict-movement")
+        .description("Leads moving targets by their velocity over ping and reaction time.")
+        .defaultValue(true)
+        .build()
+    );
+
+    private final Setting<Integer> predictTicks = sgTargeting.add(new IntSetting.Builder()
+        .name("prediction-ticks")
+        .description("Extra ticks of lead on top of ping compensation.")
+        .defaultValue(3)
+        .min(0)
+        .max(10)
+        .visible(predict::get)
+        .build()
+    );
+
     private final Setting<Boolean> ignoreNakeds = sgTargeting.add(new BoolSetting.Builder()
         .name("ignore-nakeds")
         .description("Ignores players with no armor or items.")
@@ -163,6 +181,14 @@ public class Spear extends Module {
 
         Vec3 playerPos = mc.player.getEyePosition();
         Vec3 targetPos = crosshairTarget.getBoundingBox().getCenter();
+        if (predict.get()) {
+            double lead = (double)predictTicks.get() + latencyTicks();
+            targetPos = targetPos.add(
+                (crosshairTarget.getX() - crosshairTarget.xOld) * lead,
+                (crosshairTarget.getY() - crosshairTarget.yOld) * lead,
+                (crosshairTarget.getZ() - crosshairTarget.zOld) * lead
+            );
+        }
         Vec3 toTarget = targetPos.subtract(playerPos).normalize();
 
         float yaw = (float) (Math.toDegrees(Math.atan2(toTarget.z, toTarget.x)) - 90.0);
@@ -182,6 +208,12 @@ public class Spear extends Module {
         if (!renderTarget.get() || crosshairTarget == null) return;
         AABB box = crosshairTarget.getBoundingBox();
         event.renderer.box(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, sideColor.get(), lineColor.get(), shapeMode.get(), 0);
+    }
+
+    private double latencyTicks() {
+        if (mc.getConnection() == null || mc.player == null) return 2.0;
+        PlayerInfo info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
+        return info != null ? info.getLatency() / 50.0 : 2.0;
     }
 
     private Entity findTarget() {
