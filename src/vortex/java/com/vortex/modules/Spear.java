@@ -90,7 +90,7 @@ public class Spear extends Module {
 
     private final Setting<Boolean> predict = sgTargeting.add(new BoolSetting.Builder()
         .name("predict-movement")
-        .description("Leads moving targets by their velocity over ping and reaction time.")
+        .description("Leads moving targets by velocity over ping; lead shrinks while they turn.")
         .defaultValue(true)
         .build()
     );
@@ -98,7 +98,7 @@ public class Spear extends Module {
     private final Setting<Integer> predictTicks = sgTargeting.add(new IntSetting.Builder()
         .name("prediction-ticks")
         .description("Extra ticks of lead on top of ping compensation.")
-        .defaultValue(3)
+        .defaultValue(2)
         .min(0)
         .max(10)
         .visible(predict::get)
@@ -151,6 +151,15 @@ public class Spear extends Module {
     );
 
     private Entity crosshairTarget;
+    private double velX;
+    private double velY;
+    private double velZ;
+    private double prevVelX;
+    private double prevVelZ;
+    private double velCos = 1.0;
+    private boolean velInit;
+    private int stableFor;
+    private Entity trackedEntity;
 
     public Spear() {
         super(Vortex.CATEGORY, "spear", "Locks onto the targeted entity while the module is on.");
@@ -176,18 +185,18 @@ public class Spear extends Module {
 
         if (seek.get() && crosshairTarget == null) crosshairTarget = findTarget();
         if (crosshairTarget != null && !crosshairTarget.isAlive()) crosshairTarget = null;
-        if (crosshairTarget == null || !(crosshairTarget instanceof LivingEntity)) return;
+        if (crosshairTarget == null || !(crosshairTarget instanceof LivingEntity)) {
+            trackedEntity = null;
+            return;
+        }
         if (targetPlayersOnly.get() && !(crosshairTarget instanceof Player)) return;
 
+        trackVelocity(crosshairTarget);
         Vec3 playerPos = mc.player.getEyePosition();
         Vec3 targetPos = crosshairTarget.getBoundingBox().getCenter();
         if (predict.get()) {
-            double lead = (double)predictTicks.get() + latencyTicks();
-            targetPos = targetPos.add(
-                (crosshairTarget.getX() - crosshairTarget.xOld) * lead,
-                (crosshairTarget.getY() - crosshairTarget.yOld) * lead,
-                (crosshairTarget.getZ() - crosshairTarget.zOld) * lead
-            );
+            double lead = ((double)predictTicks.get() + latencyTicks()) * leadMul();
+            targetPos = targetPos.add(velX * lead, velY * lead, velZ * lead);
         }
         Vec3 toTarget = targetPos.subtract(playerPos).normalize();
 
@@ -214,6 +223,60 @@ public class Spear extends Module {
         if (mc.getConnection() == null || mc.player == null) return 2.0;
         PlayerInfo info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
         return info != null ? info.getLatency() / 50.0 : 2.0;
+    }
+
+    private void trackVelocity(Entity e) {
+        double dx;
+        double dy;
+        double dz;
+        double m1;
+        double m2;
+        if (trackedEntity != e) {
+            trackedEntity = e;
+            velInit = false;
+        }
+        dx = e.getX() - e.xOld;
+        dy = e.getY() - e.yOld;
+        dz = e.getZ() - e.zOld;
+        if (!velInit) {
+            velX = dx;
+            velY = dy;
+            velZ = dz;
+            prevVelX = dx;
+            prevVelZ = dz;
+            velCos = 1.0;
+            velInit = true;
+            stableFor = 5;
+            return;
+        }
+        prevVelX = velX;
+        prevVelZ = velZ;
+        velX = (velX + dx) * 0.5;
+        velY = (velY + dy) * 0.5;
+        velZ = (velZ + dz) * 0.5;
+        m1 = Math.sqrt(prevVelX * prevVelX + prevVelZ * prevVelZ);
+        m2 = Math.sqrt(dx * dx + dz * dz);
+        if (m1 > 0.05 && m2 > 0.05) {
+            velCos = (prevVelX * dx + prevVelZ * dz) / (m1 * m2);
+            if (velCos > 0.96) {
+                ++stableFor;
+            } else if (velCos > 0.5) {
+                if (stableFor > 1) {
+                    stableFor = 1;
+                }
+            } else {
+                stableFor = 0;
+            }
+        } else {
+            velCos = 1.0;
+            if (stableFor < 5) {
+                ++stableFor;
+            }
+        }
+    }
+
+    private double leadMul() {
+        return velCos > 0.96 ? 1.0 : (velCos > 0.5 ? 0.6 : 0.35);
     }
 
     private Entity findTarget() {
