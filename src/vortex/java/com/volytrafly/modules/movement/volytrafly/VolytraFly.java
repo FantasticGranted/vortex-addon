@@ -495,6 +495,7 @@ public class VolytraFly extends Module {
     private double velX, velY, velZ;
     private double ticksLeft;
     private Vec3 forward, right;
+    private boolean prevCombatOwns;
     private double acceleration;
     private boolean atMaxSpeed;
     private int accelerationDelayTicks;
@@ -579,6 +580,15 @@ public class VolytraFly extends Module {
         if (chestSwapModule != null) chestSwapModule.swap();
     }
 
+    private boolean combatOwnsMovement() {
+        Module m = Modules.get().get("mace-smash");
+        if (m != null && m.isActive()) {
+            return true;
+        }
+        m = Modules.get().get("lance");
+        return m != null && m.isActive();
+    }
+
     @EventHandler
     @SuppressWarnings("unused")
     private void onPlayerMove(PlayerMoveEvent event) {
@@ -615,20 +625,27 @@ public class VolytraFly extends Module {
             handleBuildingMode();
             handleMaxHeight();
 
-            int chunkX = (int) ((player.getX() + velX) / 16);
-            int chunkZ = (int) ((player.getZ() + velZ) / 16);
-            if (dontGoIntoUnloadedChunks.get()) {
-                if (world.getChunkSource().hasChunk(chunkX, chunkZ)) {
-                    ((IVec3) event.movement).meteor$set(velX, velY, velZ);
+            boolean combatOwns = this.combatOwnsMovement();
+            if (this.prevCombatOwns && !combatOwns) {
+                zeroAcceleration();
+            }
+            this.prevCombatOwns = combatOwns;
+            if (!combatOwns) {
+                int chunkX = (int) ((player.getX() + velX) / 16);
+                int chunkZ = (int) ((player.getZ() + velZ) / 16);
+                if (dontGoIntoUnloadedChunks.get()) {
+                    if (world.getChunkSource().hasChunk(chunkX, chunkZ)) {
+                        ((IVec3) event.movement).meteor$set(velX, velY, velZ);
+                    } else {
+                        // Don't reset acceleration/ramp state here - this fires every tick you're
+                        // outrunning chunk loading, and a full zeroAcceleration() would stomp your
+                        // ramped/held speed even though you never actually stopped moving. Just
+                        // suppress this tick's horizontal movement.
+                        ((IVec3) event.movement).meteor$set(0, velY, 0);
+                    }
                 } else {
-                    // Don't reset acceleration/ramp state here - this fires every tick you're
-                    // outrunning chunk loading, and a full zeroAcceleration() would stomp your
-                    // ramped/held speed even though you never actually stopped moving. Just
-                    // suppress this tick's horizontal movement.
-                    ((IVec3) event.movement).meteor$set(0, velY, 0);
+                    ((IVec3) event.movement).meteor$set(velX, velY, velZ);
                 }
-            } else {
-                ((IVec3) event.movement).meteor$set(velX, velY, velZ);
             }
         } else {
             mappingWaitingForChunks = false;
