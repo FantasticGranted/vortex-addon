@@ -1,4 +1,4 @@
-package com.example.addon.mixin;
+package com.vortex.mixin;
 
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;

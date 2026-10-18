@@ -89,6 +89,9 @@ dependencies {
 
     // Quietee Utils
     implementation(files("libs/quiettee-utils-1.0.0+mc26.1.jar"))
+
+    // QuinnAddon
+    implementation(files("libs/quinnaddon-0.4.0-26.1.2.jar"))
 }
 
 sourceSets {
@@ -160,6 +163,9 @@ tasks {
         from(zipTree("libs/quiettee-utils-1.0.0+mc26.1.jar")) {
             exclude("fabric.mod.json")
         }
+        from(zipTree("libs/quinnaddon-0.4.0-26.1.2.jar")) {
+            exclude("fabric.mod.json")
+        }
         from({
             configurations.runtimeClasspath.get()
                 .filter { it.name.contains("pinyin4j") }
@@ -172,7 +178,6 @@ tasks {
 
         from(sourceSets.main.get().output) {
             include("com/vortex/**")
-            include("com/example/**")
         }
         from("src/vortex/resources") {
             include("assets/vortex/**")

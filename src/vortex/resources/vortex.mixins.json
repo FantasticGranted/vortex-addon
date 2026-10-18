@@ -1,9 +1,8 @@
 {
   "required": true,
-  "package": "com.example.addon.mixin",
+  "package": "com.vortex.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "BetterTabPlusMixin",
     "FriendsCommandMixin"
   ],
   "injectors": {

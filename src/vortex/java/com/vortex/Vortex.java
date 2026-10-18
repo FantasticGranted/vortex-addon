@@ -1,6 +1,6 @@
 package com.vortex;
 
-import com.example.addon.QuinnAddon;
+import com.Quinn.addon.QuinnAddon;
 import com.mojang.logging.LogUtils;
 import com.quiettee.utils.QuietteeUtils;
 import com.vortex.commands.ChestSearchCommand;
@@ -52,7 +52,7 @@ public class Vortex extends MeteorAddon {
 
         // Bundled addons are not fabric entrypoints anymore, so register their
         // orbit lambda factories ourselves (Meteor does this per entrypoint addon)
-        for (String pkg : new String[]{"com.quiettee.utils", "net.numericly.superprinter", "com.volytrafly", "com.example.addon"}) {
+        for (String pkg : new String[]{"com.quiettee.utils", "net.numericly.superprinter", "com.volytrafly", "com.Quinn.addon"}) {
             MeteorClient.EVENT_BUS.registerLambdaFactory(pkg, (method, clazz) ->
                 (java.lang.invoke.MethodHandles.Lookup) method.invoke(null, clazz, java.lang.invoke.MethodHandles.lookup()));
         }

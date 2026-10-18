@@ -23,14 +23,15 @@
       "com.vortex.Vortex"
     ],
     "main": [
-      "com.example.addon.SoundRegistry"
+      "com.Quinn.addon.SoundRegistry"
     ]
   },
   "accessWidener": "printer.accesswidener",
   "mixins": [
     "vortex_printer.mixins.json",
     "quiettee-utils.mixins.json",
-    "addon-template.mixins.json"
+    "vortex.mixins.json",
+    "QuinnAddon.mixins.json"
   ],
   "custom": {
     "meteor-client:color": "0,255,220",
